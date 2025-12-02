@@ -117,7 +117,8 @@ const loadAssignments = async () => {
     navigate(`/assignments/${assignment.Id}/edit`);
   };
 
-  const handleSubmitAssignment = (assignment) => {
+const handleSubmitAssignment = (assignment) => {
+    toast.info(`Opening submission form for "${assignment.title}"`);
     navigate(`/assignments/${assignment.Id}/submit`);
   };
 
