@@ -213,33 +213,6 @@ const navigate = useNavigate();
               actionLabel={!searchTerm ? "Add Student" : undefined}
               onAction={!searchTerm ? () => setShowStudentForm(true) : undefined}
             />
-          
-          {/* Student Form Modal */}
-          {showStudentForm && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-              <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white rounded-t-2xl border-b border-gray-200 p-4 flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Add New Student</h2>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => setShowStudentForm(false)}
-                  >
-                    <ApperIcon name="X" className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="p-4">
-<StudentForm
-                    onSave={() => {
-                      setShowStudentForm(false);
-                      loadStudentsData();
-                    }}
-                    onCancel={() => setShowStudentForm(false)}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -276,8 +249,35 @@ const navigate = useNavigate();
               </tbody>
             </table>
           </div>
-        )}
+)}
       </Card>
+
+      {/* Student Form Modal */}
+      {showStudentForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white rounded-t-2xl border-b border-gray-200 p-4 flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Add New Student</h2>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowStudentForm(false)}
+              >
+                <ApperIcon name="X" className="h-4 w-4" />
+              </Button>
+            </div>
+            <div className="p-4">
+              <StudentForm
+                onSave={() => {
+                  setShowStudentForm(false);
+                  loadStudentsData();
+                }}
+                onCancel={() => setShowStudentForm(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
