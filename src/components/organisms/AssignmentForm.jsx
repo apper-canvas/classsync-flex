@@ -1,35 +1,56 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import Button from "@/components/atoms/Button";
 import Card from "@/components/atoms/Card";
 import FormField from "@/components/molecules/FormField";
 import ApperIcon from "@/components/ApperIcon";
 import assignmentService from "@/services/api/assignmentService";
-
+import classService from "@/services/api/classService";
 const AssignmentForm = ({ assignment, onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     title: assignment?.title || "",
     description: assignment?.description || "",
     dueDate: assignment?.dueDate ? assignment.dueDate.split("T")[0] : "",
     points: assignment?.points || "",
     subject: assignment?.subject || ""
   });
-  
+
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [subjects, setSubjects] = useState([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(true);
 
-  const subjects = [
-    "Mathematics",
-    "English Literature", 
-    "History",
-    "Science",
-    "Chemistry",
-    "Physics",
-    "Biology",
-    "Computer Science",
-    "Art",
-    "Music"
-  ];
+  useEffect(() => {
+    loadSubjects();
+  }, []);
+
+  const loadSubjects = async () => {
+    try {
+      setLoadingSubjects(true);
+      const classes = await classService.getAll();
+      
+      // Extract unique subjects from classes
+      const uniqueSubjects = [...new Set(classes.map(cls => cls.subject).filter(Boolean))];
+      setSubjects(uniqueSubjects.sort());
+    } catch (error) {
+      console.error("Error loading subjects:", error);
+      // Fallback to default subjects if loading fails
+      setSubjects([
+        "Mathematics",
+        "English Literature", 
+        "History",
+        "Science",
+        "Chemistry",
+        "Physics",
+        "Biology",
+        "Computer Science",
+        "Art",
+        "Music"
+      ]);
+    } finally {
+      setLoadingSubjects(false);
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
