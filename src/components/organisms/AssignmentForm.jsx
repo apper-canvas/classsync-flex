@@ -162,12 +162,13 @@ const AssignmentForm = ({ assignment, onSave, onCancel }) => {
               min="1"
             />
 
-            <FormField
+<FormField
               label="Subject"
               type="select"
               value={formData.subject}
               onChange={(e) => handleChange("subject", e.target.value)}
               error={errors.subject}
+              placeholder="Select a subject"
             >
               <option value="">Select a subject</option>
               {subjects.map(subject => (
