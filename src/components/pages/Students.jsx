@@ -1,21 +1,23 @@
-import { useState, useEffect } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Card from "@/components/atoms/Card";
-import StudentRow from "@/components/molecules/StudentRow";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { toast } from "react-toastify";
+import submissionService from "@/services/api/submissionService";
+import userService from "@/services/api/userService";
+import assignmentService from "@/services/api/assignmentService";
+import ApperIcon from "@/components/ApperIcon";
 import Loading from "@/components/ui/Loading";
 import ErrorView from "@/components/ui/ErrorView";
 import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import userService from "@/services/api/userService";
-import submissionService from "@/services/api/submissionService";
-import assignmentService from "@/services/api/assignmentService";
-import { toast } from "react-toastify";
-
+import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
+import Card from "@/components/atoms/Card";
+import Grades from "@/components/pages/Grades";
+import StudentRow from "@/components/molecules/StudentRow";
+import StudentForm from "@/components/forms/StudentForm";
 const Students = () => {
   const { currentRole } = useOutletContext();
-  const navigate = useNavigate();
+const navigate = useNavigate();
+  const [showStudentForm, setShowStudentForm] = useState(false);
   
   const [students, setStudents] = useState([]);
   const [assignments, setAssignments] = useState([]);
@@ -119,7 +121,7 @@ const Students = () => {
           <p className="text-gray-600 mt-2">View and manage your students' progress</p>
         </div>
 
-        <Button onClick={() => toast.info("Add student functionality would be implemented here")}>
+<Button onClick={() => setShowStudentForm(true)}>
           <ApperIcon name="UserPlus" className="h-4 w-4 mr-2" />
           Add Student
         </Button>
@@ -204,13 +206,40 @@ const Students = () => {
       <Card className="overflow-hidden">
         {filteredStudents.length === 0 ? (
           <div className="p-6">
-            <Empty 
+<Empty 
               icon="Users"
               title={searchTerm ? "No matching students found" : "No students enrolled"}
               description={searchTerm ? "Try adjusting your search criteria" : "Add students to your class to get started"}
               actionLabel={!searchTerm ? "Add Student" : undefined}
-              onAction={!searchTerm ? () => toast.info("Add student functionality would be implemented here") : undefined}
+              onAction={!searchTerm ? () => setShowStudentForm(true) : undefined}
             />
+          
+          {/* Student Form Modal */}
+          {showStudentForm && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+                <div className="sticky top-0 bg-white rounded-t-2xl border-b border-gray-200 p-4 flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">Add New Student</h2>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => setShowStudentForm(false)}
+                  >
+                    <ApperIcon name="X" className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="p-4">
+<StudentForm
+                    onSave={() => {
+                      setShowStudentForm(false);
+                      loadStudentsData();
+                    }}
+                    onCancel={() => setShowStudentForm(false)}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
           </div>
         ) : (
           <div className="overflow-x-auto">
