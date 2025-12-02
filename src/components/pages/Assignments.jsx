@@ -24,15 +24,19 @@ const Assignments = () => {
   const [filterSubject, setFilterSubject] = useState("");
   const [sortBy, setSortBy] = useState("dueDate");
 
-  const loadAssignments = async () => {
+const loadAssignments = async () => {
     setLoading(true);
     setError("");
+    console.log("Loading assignments...");
     
     try {
       const [assignmentsData, submissionsData] = await Promise.all([
         assignmentService.getActiveAssignments(),
         submissionService.getAll()
       ]);
+      
+      console.log("Loaded assignments:", assignmentsData);
+      console.log("Assignment subjects:", assignmentsData.map(a => a.subject));
       
       setAssignments(assignmentsData);
       setSubmissions(submissionsData);
@@ -117,8 +121,10 @@ const Assignments = () => {
     navigate(`/assignments/${assignment.Id}/submit`);
   };
 
-  const getUniqueSubjects = () => {
-    return [...new Set(assignments.map(a => a.subject))].sort();
+const getUniqueSubjects = () => {
+    const subjects = [...new Set(assignments.map(a => a.subject).filter(Boolean))].sort();
+    console.log("Unique subjects:", subjects);
+    return subjects;
   };
 
   if (loading) return <Loading type="skeleton" />;
