@@ -1,0 +1,44 @@
+[
+  {
+    "Id": 1,
+    "name": "John Smith",
+    "email": "john.smith@school.edu",
+    "role": "teacher",
+    "createdAt": "2024-01-15T08:00:00Z"
+  },
+  {
+    "Id": 2,
+    "name": "Alice Johnson",
+    "email": "alice.johnson@student.edu",
+    "role": "student",
+    "createdAt": "2024-01-20T10:30:00Z"
+  },
+  {
+    "Id": 3,
+    "name": "Bob Wilson",
+    "email": "bob.wilson@student.edu",
+    "role": "student",
+    "createdAt": "2024-01-22T14:15:00Z"
+  },
+  {
+    "Id": 4,
+    "name": "Emma Davis",
+    "email": "emma.davis@student.edu",
+    "role": "student",
+    "createdAt": "2024-01-25T09:45:00Z"
+  },
+  {
+    "Id": 5,
+    "name": "Michael Brown",
+    "email": "michael.brown@student.edu",
+    "role": "student",
+    "createdAt": "2024-02-01T11:20:00Z"
+  },
+  {
+    "Id": 6,
+    "name": "Sarah Wilson",
+    "email": "sarah.wilson@school.edu",
+    "role": "teacher",
+    "createdAt": "2024-01-10T07:30:00Z"
+  }
+]

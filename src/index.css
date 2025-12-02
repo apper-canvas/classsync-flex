@@ -1,0 +1,71 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import 'react-toastify/dist/ReactToastify.css';
+
+/* Custom toast styling */
+.Toastify__toast-container {
+  @apply z-[9999];
+}
+
+.Toastify__toast {
+  @apply bg-white shadow-lg border border-gray-200 rounded-xl;
+}
+
+.Toastify__toast--info {
+  @apply border-l-4 border-l-primary-500;
+}
+
+.Toastify__toast--success {
+  @apply border-l-4 border-l-emerald-500;
+}
+
+.Toastify__toast--warning {
+  @apply border-l-4 border-l-amber-500;
+}
+
+.Toastify__toast--error {
+  @apply border-l-4 border-l-red-500;
+}
+
+.Toastify__toast-body {
+  @apply text-gray-700 font-medium;
+}
+
+.Toastify__progress-bar {
+  @apply bg-gradient-to-r from-primary-500 to-purple-500;
+}
+
+/* Glassmorphism effects */
+.glass {
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-100 rounded-lg;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-300 rounded-lg hover:bg-gray-400;
+}
+
+/* Animation keyframes */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer {
+  animation: shimmer 2s infinite;
+}
+
+/* Focus states */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:ring-opacity-50;
+}

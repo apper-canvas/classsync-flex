@@ -1,0 +1,30 @@
+[
+  {
+    "Id": 1,
+    "name": "Algebra II - Period 3",
+    "teacherId": 1,
+    "studentIds": [2, 3, 4, 5],
+    "subject": "Mathematics"
+  },
+  {
+    "Id": 2,
+    "name": "World History - Period 2",
+    "teacherId": 1,
+    "studentIds": [2, 3, 4],
+    "subject": "History"
+  },
+  {
+    "Id": 3,
+    "name": "Chemistry Lab - Period 5",
+    "teacherId": 6,
+    "studentIds": [4, 5],
+    "subject": "Chemistry"
+  },
+  {
+    "Id": 4,
+    "name": "AP Physics - Period 1",
+    "teacherId": 6,
+    "studentIds": [2, 3, 5],
+    "subject": "Physics"
+  }
+]

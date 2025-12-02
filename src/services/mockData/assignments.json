@@ -1,0 +1,57 @@
+[
+  {
+    "Id": 1,
+    "title": "Linear Equations Practice",
+    "description": "Complete exercises 1-15 from chapter 4. Show all work and explain your reasoning for word problems.",
+    "dueDate": "2024-12-30T23:59:00Z",
+    "points": 50,
+    "subject": "Mathematics",
+    "teacherId": 1,
+    "createdAt": "2024-12-10T10:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 2,
+    "title": "Essay: Industrial Revolution",
+    "description": "Write a 500-word essay on the impact of the Industrial Revolution on modern society. Include at least 3 sources and proper citations.",
+    "dueDate": "2024-12-28T23:59:00Z",
+    "points": 100,
+    "subject": "History",
+    "teacherId": 1,
+    "createdAt": "2024-12-08T14:30:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 3,
+    "title": "Lab Report: Chemical Reactions",
+    "description": "Document your observations from today's chemistry lab. Include hypothesis, procedure, results, and conclusion.",
+    "dueDate": "2024-12-25T23:59:00Z",
+    "points": 75,
+    "subject": "Chemistry",
+    "teacherId": 6,
+    "createdAt": "2024-12-12T16:15:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 4,
+    "title": "Reading Comprehension Quiz",
+    "description": "Complete the online quiz based on chapters 7-9 of the assigned novel. Questions cover plot, character development, and themes.",
+    "dueDate": "2024-12-27T23:59:00Z",
+    "points": 25,
+    "subject": "English Literature",
+    "teacherId": 1,
+    "createdAt": "2024-12-09T09:00:00Z",
+    "status": "active"
+  },
+  {
+    "Id": 5,
+    "title": "Physics Problem Set",
+    "description": "Solve problems 12-20 from the mechanics unit. Focus on force diagrams and Newton's laws applications.",
+    "dueDate": "2024-12-31T23:59:00Z",
+    "points": 60,
+    "subject": "Physics",
+    "teacherId": 6,
+    "createdAt": "2024-12-11T11:45:00Z",
+    "status": "active"
+  }
+]

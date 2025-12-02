@@ -1,0 +1,57 @@
+[
+  {
+    "Id": 1,
+    "assignmentId": 1,
+    "studentId": 2,
+    "content": "I have completed all 15 exercises from chapter 4. For problem 8, I used the substitution method because it seemed most straightforward with the given equations.",
+    "attachments": ["math_homework_alice.pdf"],
+    "submittedAt": "2024-12-15T20:30:00Z",
+    "grade": 45,
+    "feedback": "Great work on most problems! Check your algebra on problems 12 and 14.",
+    "status": "graded"
+  },
+  {
+    "Id": 2,
+    "assignmentId": 2,
+    "studentId": 2,
+    "content": "The Industrial Revolution fundamentally transformed society by introducing mass production, urbanization, and new social classes...",
+    "attachments": ["industrial_revolution_essay.docx"],
+    "submittedAt": "2024-12-20T18:45:00Z",
+    "grade": 88,
+    "feedback": "Well-researched essay with good analysis. Consider strengthening your conclusion.",
+    "status": "graded"
+  },
+  {
+    "Id": 3,
+    "assignmentId": 1,
+    "studentId": 3,
+    "content": "Completed all exercises. Had trouble with word problems 10 and 13, but I think I got the right approach.",
+    "attachments": ["bob_math_homework.jpg"],
+    "submittedAt": "2024-12-18T21:15:00Z",
+    "grade": null,
+    "feedback": null,
+    "status": "submitted"
+  },
+  {
+    "Id": 4,
+    "assignmentId": 3,
+    "studentId": 4,
+    "content": "Lab Report: Observed color changes when mixing various chemical solutions. Hypothesis was partially correct.",
+    "attachments": ["emma_lab_report.pdf"],
+    "submittedAt": "2024-12-22T16:20:00Z",
+    "grade": null,
+    "feedback": null,
+    "status": "submitted"
+  },
+  {
+    "Id": 5,
+    "assignmentId": 4,
+    "studentId": 5,
+    "content": "Quiz completed online. Found the character analysis questions challenging but interesting.",
+    "attachments": [],
+    "submittedAt": "2024-12-19T14:30:00Z",
+    "grade": 22,
+    "feedback": "Good understanding of themes. Review character motivations for better analysis.",
+    "status": "graded"
+  }
+]
