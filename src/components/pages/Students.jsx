@@ -13,7 +13,7 @@ import Input from "@/components/atoms/Input";
 import Card from "@/components/atoms/Card";
 import Grades from "@/components/pages/Grades";
 import StudentRow from "@/components/molecules/StudentRow";
-import StudentForm from "@/components/forms/StudentForm";
+import StudentForm from "@/components/organisms/StudentForm";
 const Students = () => {
   const { currentRole } = useOutletContext();
 const navigate = useNavigate();
