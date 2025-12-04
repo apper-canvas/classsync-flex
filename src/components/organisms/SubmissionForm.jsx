@@ -63,10 +63,18 @@ if (submissionId) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleFileAttach = () => {
+const handleFileAttach = () => {
     const fileTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'jpg', 'png', 'zip'];
     const randomType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
-const handleSaveAsDraft = async () => {
+    const fileName = `submission_${Date.now()}.${randomType}`;
+    setFormData(prev => ({
+      ...prev,
+      attachments: [...prev.attachments, fileName]
+    }));
+    toast.success("File attached successfully!");
+  };
+
+  const handleSaveAsDraft = async () => {
     setSaving(true);
     try {
       const submissionData = {
@@ -116,7 +124,8 @@ const handleSaveAsDraft = async () => {
       files: prev.files.filter(file => file.id !== fileId)
     }));
   };
-const handleSubmit = async (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -162,61 +171,6 @@ const handleSubmit = async (e) => {
       setLoading(false);
     }
   };
-<FormField label="Content" required>
-          <Textarea
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            placeholder="Enter your submission content..."
-            rows={6}
-            required
-          />
-        </FormField>
-
-        <FormField label="Files" description="Upload supporting files for your submission">
-          <FileUpload
-            onFilesChange={handleFilesChange}
-            maxFiles={5}
-            maxSize={10485760} // 10MB
-            disabled={loading}
-          />
-        </FormField>
-
-        {formData.files.length > 0 && (
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-gray-900">File Previews</h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {formData.files.map(file => (
-                <FilePreview
-                  key={file.id}
-                  file={file}
-                  onRemove={handleFileRemove}
-                />
-              ))}
-            </div>
-          </div>
-        )}
-
-        <div className="flex gap-3 pt-6">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="flex-1"
-          >
-            {loading ? (
-              <>
-                <ApperIcon name="Loader2" className="animate-spin mr-2" size={16} />
-                {submissionId ? 'Updating...' : 'Submitting...'}
-              </>
-            ) : (
-              submissionId ? 'Update Submission' : 'Submit Assignment'
-    const fileName = `submission_${Date.now()}.${randomType}`;
-    setFormData(prev => ({
-      ...prev,
-      attachments: [...prev.attachments, fileName]
-    }));
-    toast.success("File attached successfully!");
-  };
 
   const addLink = () => {
     const link = prompt("Enter URL (Google Drive, Docs, or external link):");
@@ -246,6 +200,170 @@ const handleSubmit = async (e) => {
   const dueDate = new Date(assignment.dueDate);
   const isOverdue = new Date() > dueDate;
 
+  return (
+    <div className="space-y-6">
+      {/* Assignment Details */}
+      <Card className="p-6">
+        <div className="space-y-4">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">{assignment.title}</h2>
+              <p className="text-gray-600">{assignment.subject}</p>
+            </div>
+            <Badge variant={isOverdue ? "danger" : "info"}>
+              {assignment.points} points
+            </Badge>
+          </div>
+          
+          <div className="prose max-w-none text-gray-700 bg-gray-50 rounded-lg p-4">
+            <p className="whitespace-pre-wrap">{assignment.description}</p>
+          </div>
+          
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <div className="flex items-center text-sm text-gray-600">
+              <ApperIcon name="Calendar" className="h-4 w-4 mr-1" />
+              Due {format(dueDate, "MMM d, yyyy 'at' h:mm a")}
+            </div>
+            {isOverdue && (
+              <Badge variant="danger">
+                <ApperIcon name="AlertCircle" className="h-3 w-3 mr-1" />
+                Overdue
+              </Badge>
+            )}
+          </div>
+        </div>
+      </Card>
+
+      {/* Submission Form */}
+      <Card className="p-6">
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+                <ApperIcon name={existingSubmission ? "Edit" : "Upload"} className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {existingSubmission ? "Edit Submission" : "Submit Assignment"}
+                </h3>
+                <p className="text-gray-600">
+                  {existingSubmission ? "Update your submission" : "Provide your work and any supporting files"}
+                </p>
+              </div>
+            </div>
+            
+            {lastSaved && (
+              <div className="text-xs text-gray-500">
+                <ApperIcon name="Check" className="h-3 w-3 inline mr-1" />
+                Draft saved at {format(lastSaved, "h:mm a")}
+              </div>
+            )}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Content Field */}
+            <FormField label="Content" required>
+              <Textarea
+                name="content"
+                value={formData.content}
+                onChange={handleChange}
+                placeholder="Enter your submission content..."
+                rows={6}
+                required
+              />
+            </FormField>
+
+            {/* File Upload */}
+            <FormField label="Files" description="Upload supporting files for your submission">
+              <FileUpload
+                onFilesChange={handleFilesChange}
+                maxFiles={5}
+                maxSize={10485760} // 10MB
+                disabled={loading}
+              />
+            </FormField>
+
+            {formData.files && formData.files.length > 0 && (
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-gray-900">File Previews</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {formData.files.map(file => (
+                    <FilePreview
+                      key={file.id}
+                      file={file}
+                      onRemove={handleFileRemove}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 pt-6">
+              <Button
+                type="submit"
+                disabled={loading}
+                className="flex-1"
+              >
+                {loading ? (
+                  <>
+                    <ApperIcon name="Loader2" className="animate-spin mr-2" size={16} />
+                    {submissionId ? 'Updating...' : 'Submitting...'}
+                  </>
+                ) : (
+                  submissionId ? 'Update Submission' : 'Submit Assignment'
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </Card>
+
+      {/* Confirmation Dialog */}
+      {showConfirmDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="p-6 max-w-md mx-4">
+            <div className="space-y-4">
+              <div className="text-center">
+                <ApperIcon name="AlertTriangle" className="h-12 w-12 mx-auto text-amber-500 mb-3" />
+                <h3 className="text-lg font-semibold text-gray-900">Submit Assignment?</h3>
+                <p className="text-sm text-gray-600 mt-2">
+                  Are you sure you want to submit this assignment? You can edit it later if resubmission is allowed.
+                </p>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <input 
+                  type="checkbox" 
+                  id="confirm" 
+                  className="h-4 w-4 text-purple-600 focus:ring-purple-500 border-gray-300 rounded" 
+                />
+                <label htmlFor="confirm" className="text-sm text-gray-700">
+                  I confirm this is my final submission
+                </label>
+              </div>
+              
+              <div className="flex items-center justify-end space-x-3 pt-4">
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setShowConfirmDialog(false)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="primary" 
+                  onClick={confirmSubmit}
+                  className="bg-gradient-to-r from-purple-500 to-purple-600"
+                >
+                  Yes, Submit
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
   return (
     <div className="space-y-6">
       {/* Assignment Details */}
