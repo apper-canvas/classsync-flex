@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import FileUpload from "@/components/atoms/FileUpload";
+import { FileUpload } from "@/components/atoms/FileUpload";
 import { toast } from "react-toastify";
 import resourceService from "@/services/api/resourceService";
 import classService from "@/services/api/classService";
