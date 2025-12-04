@@ -152,9 +152,6 @@ const getOverallStats = () => {
     const completionRate = assignments.length > 0 && students.length > 0
       ? Math.round((totalSubmissions / (assignments.length * students.length)) * 100)
       : 0;
-const completionRate = assignments.length > 0 && students.length > 0
-      ? Math.round((totalSubmissions / (assignments.length * students.length)) * 100)
-      : 0;
 
     return {
       totalSubmissions,
