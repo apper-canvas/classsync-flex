@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ApperIcon from '@/components/ApperIcon';
-import { Button } from '@/components/atoms/Button';
+import Button from '@/components/atoms/Button';
 import { cn } from '@/utils/cn';
 
 const FilePreview = ({ file, onRemove, className = '' }) => {
