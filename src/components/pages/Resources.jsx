@@ -316,10 +316,10 @@ const getFileIcon = (fileType) => {
 
   if (error) {
     return <ErrorView error={error} onRetry={loadResources} />;
-  }
-const filteredResources = getFilteredResources();
-  const types = getUniqueTypes();
-  const subjects = getUniqueSubjects();
+}
+
+  const filteredResources = getFilteredResources();
+  
   return (
 <div className="space-y-6">
       {/* Header */}
@@ -604,7 +604,7 @@ const filteredResources = getFilteredResources();
 className="w-full sm:w-40"
           >
             <option value="">All Types</option>
-            {[...new Set(resources.map(r => r.type))].sort().map(type => (
+{types.map(type => (
               <option key={type} value={type}>{type}</option>
             ))}
           </Select>
