@@ -12,7 +12,8 @@ const Sidebar = ({ currentRole, className, isMobile = false, onClose }) => {
     if (currentRole === "teacher") {
       return [
         ...baseItems,
-        { path: "students", icon: "Users", label: "Students" },
+{ path: "students", icon: "Users", label: "Students" },
+        { path: "grades", icon: "BookOpen", label: "Gradebook" },
         { path: "analytics", icon: "BarChart3", label: "Analytics" }
       ];
     } else {
