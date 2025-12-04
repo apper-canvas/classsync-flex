@@ -25,7 +25,7 @@ const SubmissionFormPage = () => {
     try {
       const [assignmentData, submissionData] = await Promise.all([
         assignmentService.getById(id),
-        submissionService.getSubmission(id, 2) // Student ID 2
+submissionService.getSubmission(id, 2) // Student ID 2
       ]);
       
       setAssignment(assignmentData);
@@ -75,7 +75,7 @@ const SubmissionFormPage = () => {
       <SubmissionForm
         assignment={assignment}
         existingSubmission={submission}
-        studentId={2}
+studentId={2}
         onSubmit={handleSubmit}
         onCancel={handleCancel}
       />

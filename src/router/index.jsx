@@ -77,6 +77,14 @@ const mainRoutes = [
     )
   },
   {
+    path: "assignments/:id/submissions/:submissionId/edit",
+    element: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <SubmissionFormPage />
+      </Suspense>
+    )
+  },
+  {
     path: "submissions/:submissionId/grade",
     element: (
       <Suspense fallback={<LoadingSpinner />}>

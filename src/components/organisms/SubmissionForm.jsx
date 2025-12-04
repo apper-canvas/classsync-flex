@@ -7,6 +7,7 @@ import { toast } from "react-toastify";
 import submissionService from "@/services/api/submissionService";
 import ApperIcon from "@/components/ApperIcon";
 import Textarea from "@/components/atoms/Textarea";
+import Label from "@/components/atoms/Label";
 import Button from "@/components/atoms/Button";
 import Input from "@/components/atoms/Input";
 import Card from "@/components/atoms/Card";
@@ -17,17 +18,19 @@ const SubmissionForm = ({ assignment, existingSubmission, studentId = 2, onSubmi
   const { submissionId, assignmentId } = useParams();
   const navigate = useNavigate();
   
-const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState({
     content: existingSubmission?.content || "",
     files: existingSubmission?.files || [],
     links: existingSubmission?.links || [],
     comments: existingSubmission?.comments || ""
   });
+  
+const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [lastSaved, setLastSaved] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
 
   useEffect(() => {
     const loadSubmission = async () => {
@@ -52,10 +55,10 @@ if (submissionId) {
     loadSubmission();
   }, [submissionId]);
 
-  const validateForm = () => {
+const validateForm = () => {
     const newErrors = {};
     
-if (!formData.content.trim() && formData.files.length === 0 && formData.links.length === 0) {
+    if (!formData.content.trim() && formData.files.length === 0 && formData.links.length === 0) {
       newErrors.content = "Please provide content, upload files, or add links for your submission";
     }
     
@@ -63,45 +66,66 @@ if (!formData.content.trim() && formData.files.length === 0 && formData.links.le
     return Object.keys(newErrors).length === 0;
   };
 
-const handleFileAttach = () => {
-    const fileTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'jpg', 'png', 'zip'];
-    const randomType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
-    const fileName = `submission_${Date.now()}.${randomType}`;
-    const newFile = {
-      id: Date.now(),
-      name: fileName,
-      size: Math.floor(Math.random() * 1000000) + 100000,
-      type: `application/${randomType}`,
-      status: 'completed'
-    };
+const handleFilesChange = (uploadedFiles) => {
+    // Convert FileUpload format to submission format
+    const submissionFiles = uploadedFiles.map(fileObj => ({
+      id: fileObj.id,
+      name: fileObj.name,
+      size: fileObj.size,
+      type: fileObj.type,
+      status: 'completed',
+      file: fileObj.file // Store original file reference
+    }));
+    
     setFormData(prev => ({
       ...prev,
-      files: [...prev.files, newFile]
+      files: submissionFiles
     }));
-    toast.success("File attached successfully!");
+    
+    // Clear file-related errors
+    if (errors.content && submissionFiles.length > 0) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.content;
+        return newErrors;
+      });
+    }
   };
 
+  const handleFileRemove = (fileId) => {
+    setFormData(prev => ({
+      ...prev,
+      files: prev.files.filter(file => file.id !== fileId)
+    }));
+  };
   const handleSaveAsDraft = async () => {
-    setSaving(true);
+setSaving(true);
     try {
-const submissionData = {
+      const submissionData = {
         assignmentId: assignment.Id,
         studentId: studentId,
         content: formData.content,
         files: formData.files,
         links: formData.links,
         comments: formData.comments,
-        isDraft: true
+        isDraft: true,
+        status: 'draft'
       };
 
-      if (existingSubmission) {
-        await submissionService.update(existingSubmission.id, submissionData);
+      let savedSubmission;
+      if (existingSubmission && existingSubmission.Id) {
+        savedSubmission = await submissionService.update(existingSubmission.Id, submissionData);
       } else {
-        await submissionService.create(submissionData);
+        savedSubmission = await submissionService.create(submissionData);
       }
 
       setLastSaved(new Date());
       toast.success("Draft saved successfully!");
+      
+      // Update URL if this was a new submission
+      if (!existingSubmission && savedSubmission) {
+        navigate(`/assignments/${assignment.Id}/submissions/${savedSubmission.Id}/edit`, { replace: true });
+      }
     } catch (error) {
       console.error("Error saving draft:", error);
       toast.error("Failed to save draft");
@@ -118,19 +142,6 @@ const submissionData = {
     }));
   };
 
-  const handleFilesChange = (files) => {
-    setFormData(prev => ({
-      ...prev,
-      files: files || []
-    }));
-  };
-
-  const handleFileRemove = (fileId) => {
-    setFormData(prev => ({
-      ...prev,
-      files: prev.files.filter(file => file.id !== fileId)
-    }));
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -155,9 +166,9 @@ try {
         links: formData.links,
         comments: formData.comments,
         isDraft: false,
+        status: 'submitted',
         submittedAt: new Date().toISOString()
       };
-
       if (existingSubmission) {
         await submissionService.update(existingSubmission.id, submissionData);
         toast.success("Submission updated successfully!");
@@ -181,27 +192,43 @@ try {
 
 const addLink = () => {
     const link = prompt("Enter URL (Google Drive, Docs, or external link):");
-    if (link) {
-      setFormData(prev => ({
-        ...prev,
-        links: [...prev.links, link]
-      }));
-      toast.success("Link added successfully!");
+    if (link && link.trim()) {
+      // Basic URL validation
+      try {
+        new URL(link.trim());
+        setFormData(prev => ({
+          ...prev,
+          links: [...prev.links, link.trim()]
+        }));
+        toast.success("Link added successfully!");
+        
+        // Clear content errors if we now have links
+        if (errors.content) {
+          setErrors(prev => {
+            const newErrors = { ...prev };
+            delete newErrors.content;
+            return newErrors;
+          });
+        }
+      } catch {
+        toast.error("Please enter a valid URL");
+      }
     }
   };
 
-  const removeFile = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      files: prev.files.filter((_, i) => i !== index)
-    }));
-  };
-
-  const removeLink = (index) => {
+const removeLink = (index) => {
     setFormData(prev => ({
       ...prev,
       links: prev.links.filter((_, i) => i !== index)
     }));
+  };
+
+  const togglePreview = () => {
+    setShowPreview(!showPreview);
+  };
+
+const handleConfirmSubmit = () => {
+    confirmSubmit();
   };
 
   const dueDate = new Date(assignment.dueDate);
@@ -262,9 +289,19 @@ const addLink = () => {
             {lastSaved && (
               <div className="text-xs text-gray-500">
                 <ApperIcon name="Check" className="h-3 w-3 inline mr-1" />
-                Draft saved at {format(lastSaved, "h:mm a")}
+Draft saved at {format(lastSaved, "h:mm a")}
               </div>
             )}
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={togglePreview}
+                className="flex items-center gap-2"
+              >
+                <ApperIcon name="Eye" size={16} />
+                {showPreview ? 'Edit' : 'Preview'}
+              </Button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -277,19 +314,78 @@ const addLink = () => {
                 placeholder="Enter your submission content..."
                 rows={6}
                 required
-              />
+/>
             </FormField>
 
-            {/* File Upload */}
-            <FormField label="Files" description="Upload supporting files for your submission">
+            {/* File Upload Section */}
+            <FormField
+              label="File Attachments"
+              type="custom"
+              description="Upload documents, images, or other relevant files"
+            >
               <FileUpload
                 onFilesChange={handleFilesChange}
-                maxFiles={5}
+                accept={{
+                  'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+                  'application/pdf': ['.pdf'],
+                  'application/msword': ['.doc'],
+                  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+                  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                  'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+                  'text/plain': ['.txt'],
+                  'application/zip': ['.zip']
+                }}
                 maxSize={10485760} // 10MB
-                disabled={loading}
+                maxFiles={5}
+                className="w-full"
               />
             </FormField>
 
+{/* Links Section */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>External Links</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={addLink}
+                  className="flex items-center gap-2"
+                >
+                  <ApperIcon name="Plus" size={16} />
+                  Add Link
+                </Button>
+              </div>
+              
+              {formData.links.length > 0 && (
+                <div className="space-y-2">
+                  {formData.links.map((link, index) => (
+                    <div key={index} className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                      <ApperIcon name="Link" size={16} className="text-blue-600 flex-shrink-0" />
+                      <a 
+                        href={link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 truncate flex-1 text-sm"
+                      >
+                        {link}
+                      </a>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeLink(index)}
+                        className="flex-shrink-0 text-gray-500 hover:text-red-600"
+                      >
+                        <ApperIcon name="X" size={16} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* File Previews */}
             {formData.files && formData.files.length > 0 && (
               <div className="space-y-4">
                 <h4 className="text-sm font-medium text-gray-900">File Previews</h4>
@@ -304,24 +400,118 @@ const addLink = () => {
                 </div>
               </div>
             )}
-
             {/* Action Buttons */}
-            <div className="flex gap-3 pt-6">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="flex-1"
-              >
-                {loading ? (
-                  <>
-                    <ApperIcon name="Loader2" className="animate-spin mr-2" size={16} />
-                    {submissionId ? 'Updating...' : 'Submitting...'}
-                  </>
-                ) : (
-                  submissionId ? 'Update Submission' : 'Submit Assignment'
+{!showPreview && (
+              <div className="flex gap-3 pt-6">
+                <Button
+                  type="button"
+onClick={handleSubmit}
+                  disabled={loading}
+                  className="flex-1"
+                >
+                  {loading ? (
+                    <>
+                      <ApperIcon name="Loader2" className="animate-spin mr-2" size={16} />
+                      {existingSubmission && !existingSubmission.isDraft ? 'Updating...' : 'Submitting...'}
+                    </>
+                  ) : (
+                    existingSubmission && !existingSubmission.isDraft ? 'Update Submission' : 'Submit Assignment'
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+onClick={handleSaveAsDraft}
+                  disabled={saving}
+                  className="flex items-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <ApperIcon name="Loader2" className="animate-spin" size={16} />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <ApperIcon name="Save" size={16} />
+                      Save Draft
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Preview Mode */}
+            {showPreview && (
+              <div className="space-y-6 p-6 bg-gray-50 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-gray-900">Submission Preview</h3>
+                  <Button variant="outline" onClick={togglePreview}>
+                    <ApperIcon name="Edit" size={16} className="mr-2" />
+                    Edit
+                  </Button>
+                </div>
+                
+                {formData.content && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Content</h4>
+                    <div className="p-4 bg-white rounded-lg border whitespace-pre-wrap">
+                      {formData.content}
+                    </div>
+                  </div>
                 )}
-              </Button>
-            </div>
+                
+                {formData.files.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Files ({formData.files.length})</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {formData.files.map(file => (
+                        <FilePreview key={file.id} file={file} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {formData.links.length > 0 && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Links ({formData.links.length})</h4>
+                    <div className="space-y-2">
+                      {formData.links.map((link, index) => (
+                        <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-lg border">
+                          <ApperIcon name="Link" size={16} className="text-blue-600" />
+                          <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 truncate">
+                            {link}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {formData.comments && (
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2">Comments</h4>
+                    <div className="p-4 bg-white rounded-lg border whitespace-pre-wrap">
+                      {formData.comments}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="flex gap-3 pt-4 border-t">
+                  <Button
+                    onClick={() => setShowConfirmDialog(true)}
+                    disabled={Object.keys(validateForm()).length > 0}
+                    className="flex-1"
+                  >
+                    <ApperIcon name="Send" size={16} className="mr-2" />
+                    {existingSubmission && !existingSubmission.isDraft ? 'Update Submission' : 'Submit Assignment'}
+                  </Button>
+<Button variant="outline" onClick={handleSaveAsDraft} disabled={saving}>
+                    <ApperIcon name="Save" size={16} className="mr-2" />
+                    Save Draft
+                  </Button>
+                </div>
+              </div>
+)}
           </form>
         </div>
       </Card>
@@ -350,19 +540,27 @@ const addLink = () => {
                 </label>
               </div>
               
-              <div className="flex items-center justify-end space-x-3 pt-4">
+<div className="flex gap-3">
                 <Button 
-                  variant="secondary" 
+                  variant="outline" 
                   onClick={() => setShowConfirmDialog(false)}
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
                 <Button 
-                  variant="primary" 
-                  onClick={confirmSubmit}
+                  onClick={handleConfirmSubmit}
+                  disabled={loading}
                   className="bg-gradient-to-r from-purple-500 to-purple-600"
                 >
-                  Yes, Submit
+                  {loading ? (
+                    <>
+                      <ApperIcon name="Loader2" className="animate-spin mr-2" size={16} />
+                      Submitting...
+                    </>
+                  ) : (
+                    'Yes, Submit'
+                  )}
                 </Button>
               </div>
             </div>
