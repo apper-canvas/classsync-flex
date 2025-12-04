@@ -4,7 +4,7 @@ import { format } from "date-fns";
 import { FileUpload } from "@/components/atoms/FileUpload";
 import { FilePreview } from "@/components/molecules/FilePreview";
 import { toast } from "react-toastify";
-import { submissionService } from "@/services/api/submissionService";
+import submissionService from "@/services/api/submissionService";
 import ApperIcon from "@/components/ApperIcon";
 import Textarea from "@/components/atoms/Textarea";
 import Button from "@/components/atoms/Button";
@@ -17,9 +17,9 @@ const SubmissionForm = ({ assignment, existingSubmission, studentId = 2, onSubmi
   const { submissionId, assignmentId } = useParams();
   const navigate = useNavigate();
   
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     content: existingSubmission?.content || "",
-    attachments: existingSubmission?.attachments || [],
+    files: existingSubmission?.files || [],
     links: existingSubmission?.links || [],
     comments: existingSubmission?.comments || ""
   });
@@ -37,7 +37,7 @@ if (submissionId) {
           if (submission) {
             setFormData({
               content: submission.content || "",
-              attachments: submission.attachments || [],
+              files: submission.files || [],
               links: submission.links || [],
               comments: submission.comments || ""
             });
@@ -55,7 +55,7 @@ if (submissionId) {
   const validateForm = () => {
     const newErrors = {};
     
-    if (!formData.content.trim() && formData.attachments.length === 0 && formData.links.length === 0) {
+if (!formData.content.trim() && formData.files.length === 0 && formData.links.length === 0) {
       newErrors.content = "Please provide content, upload files, or add links for your submission";
     }
     
@@ -67,9 +67,16 @@ const handleFileAttach = () => {
     const fileTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'jpg', 'png', 'zip'];
     const randomType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
     const fileName = `submission_${Date.now()}.${randomType}`;
+    const newFile = {
+      id: Date.now(),
+      name: fileName,
+      size: Math.floor(Math.random() * 1000000) + 100000,
+      type: `application/${randomType}`,
+      status: 'completed'
+    };
     setFormData(prev => ({
       ...prev,
-      attachments: [...prev.attachments, fileName]
+      files: [...prev.files, newFile]
     }));
     toast.success("File attached successfully!");
   };
@@ -77,11 +84,11 @@ const handleFileAttach = () => {
   const handleSaveAsDraft = async () => {
     setSaving(true);
     try {
-      const submissionData = {
+const submissionData = {
         assignmentId: assignment.Id,
         studentId: studentId,
         content: formData.content,
-        attachments: formData.attachments,
+        files: formData.files,
         links: formData.links,
         comments: formData.comments,
         isDraft: true
@@ -139,12 +146,12 @@ const handleFileAttach = () => {
     setShowConfirmDialog(false);
     setLoading(true);
     
-    try {
+try {
       const submissionData = {
         assignmentId: assignment.Id,
         studentId: studentId,
         content: formData.content,
-        attachments: formData.attachments,
+        files: formData.files,
         links: formData.links,
         comments: formData.comments,
         isDraft: false,
@@ -172,7 +179,7 @@ const handleFileAttach = () => {
     }
   };
 
-  const addLink = () => {
+const addLink = () => {
     const link = prompt("Enter URL (Google Drive, Docs, or external link):");
     if (link) {
       setFormData(prev => ({
@@ -183,10 +190,10 @@ const handleFileAttach = () => {
     }
   };
 
-  const removeAttachment = (index) => {
+  const removeFile = (index) => {
     setFormData(prev => ({
       ...prev,
-      attachments: prev.attachments.filter((_, i) => i !== index)
+      files: prev.files.filter((_, i) => i !== index)
     }));
   };
 
