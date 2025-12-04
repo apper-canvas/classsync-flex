@@ -92,26 +92,42 @@ const AssignmentDetail = () => {
   if (error) return <ErrorView error={error} onRetry={loadAssignmentDetails} />;
   if (!assignment) return <ErrorView error="Assignment not found" />;
 
-  const dueDate = new Date(assignment.dueDate);
+const dueDate = new Date(assignment.dueDate);
   const now = new Date();
   const isDueSoon = isAfter(dueDate, now) && isBefore(dueDate, addDays(now, 3));
   const isPastDue = isBefore(dueDate, now);
 
-  const getStatusBadge = () => {
+  const getTimeUntilDue = () => {
+    const timeDiff = dueDate.getTime() - now.getTime();
+    const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    
+    if (isPastDue) {
+      const daysOverdue = Math.abs(daysDiff);
+      return `Past due by ${daysOverdue} day${daysOverdue === 1 ? '' : 's'}`;
+    } else if (daysDiff === 0) {
+      return "Due today";
+    } else if (daysDiff === 1) {
+      return "Due tomorrow";
+    } else {
+      return `Due in ${daysDiff} day${daysDiff === 1 ? '' : 's'}`;
+    }
+  };
+const getStatusBadge = () => {
     if (currentRole === "student") {
       if (!submission) {
-        if (isPastDue) return <Badge variant="danger">Past Due</Badge>;
-        if (isDueSoon) return <Badge variant="warning">Due Soon</Badge>;
-        return <Badge variant="info">Not Submitted</Badge>;
+        if (isPastDue) return <Badge variant="danger">Past Due - Not Submitted</Badge>;
+        return <Badge variant="secondary">Not Started</Badge>;
       }
       
       switch (submission.status) {
         case "graded":
-          return <Badge variant="success">Graded</Badge>;
+          return <Badge variant="primary">Graded</Badge>;
         case "submitted":
-          return <Badge variant="primary">Submitted</Badge>;
+          return <Badge variant="success">Submitted</Badge>;
+        case "draft":
+          return <Badge variant="warning">In Progress</Badge>;
         default:
-          return <Badge variant="info">Draft</Badge>;
+          return <Badge variant="secondary">Not Started</Badge>;
       }
     }
     
@@ -285,13 +301,15 @@ const AssignmentDetail = () => {
               )}
             </div>
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="flex items-center space-x-2 text-gray-600">
               <ApperIcon name="Calendar" className="h-5 w-5" />
               <div>
                 <p className="text-sm font-medium">Due Date</p>
                 <p className="text-sm">{format(dueDate, "PPP 'at' p")}</p>
+                <p className={`text-xs font-medium ${isPastDue ? 'text-red-600' : isDueSoon ? 'text-yellow-600' : 'text-green-600'}`}>
+                  {getTimeUntilDue()}
+                </p>
               </div>
             </div>
             
@@ -314,55 +332,197 @@ const AssignmentDetail = () => {
                 </div>
               </div>
             )}
-          </div>
+</div>
 
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-3">Instructions</h3>
-            <div className="prose max-w-none text-gray-700">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-3">Assignment Instructions</h3>
+            <div className="prose max-w-none text-gray-700 bg-gray-50 rounded-lg p-4">
               <p className="whitespace-pre-wrap">{assignment.description}</p>
             </div>
+            
+            {assignment.attachments && assignment.attachments.length > 0 && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">Resources & Materials:</p>
+                <div className="space-y-2">
+                  {assignment.attachments.map((file, index) => (
+                    <div key={index} className="flex items-center p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">
+                      <ApperIcon name="Download" className="h-4 w-4 mr-2 text-blue-500" />
+                      <span className="text-sm text-gray-700">{file}</span>
+                      <Button variant="ghost" size="sm" className="ml-auto">
+                        <ApperIcon name="ExternalLink" className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {assignment.rubric && (
+              <div>
+                <p className="text-sm font-medium text-gray-700 mb-2">Grading Rubric:</p>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-800">{assignment.rubric}</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </Card>
 
       {/* Submission Status */}
+{/* Submission Section for Students */}
+      {currentRole === "student" && !submission && !isPastDue && (
+        <Card className="p-6">
+          <div className="space-y-6">
+            <div className="flex items-center space-x-3">
+              <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-purple-500 to-purple-600 flex items-center justify-center">
+                <ApperIcon name="Upload" className="h-5 w-5 text-white" />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">Submit Your Work</h2>
+                <p className="text-gray-600">Upload files, write your response, or share links</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors cursor-pointer">
+                <ApperIcon name="Upload" className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm font-medium text-gray-700">File Upload</p>
+                <p className="text-xs text-gray-500">PDF, DOCX, Images (Max 50MB)</p>
+              </div>
+              
+              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors cursor-pointer">
+                <ApperIcon name="Type" className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm font-medium text-gray-700">Text Response</p>
+                <p className="text-xs text-gray-500">Type your answer directly</p>
+              </div>
+              
+              <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-purple-400 transition-colors cursor-pointer">
+                <ApperIcon name="Link" className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                <p className="text-sm font-medium text-gray-700">Share Link</p>
+                <p className="text-xs text-gray-500">Google Docs, Drive, URLs</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-center">
+              <Button 
+                variant="primary" 
+                size="lg" 
+                onClick={handleSubmitAssignment}
+                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white px-8 py-3"
+              >
+                <ApperIcon name="Play" className="h-5 w-5 mr-2" />
+                Start Assignment
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Current Submission Display */}
       {submission && (
         <Card className="p-6">
           <div className="space-y-6">
-            <h2 className="text-xl font-semibold text-gray-900">Your Submission</h2>
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Your Submission</h2>
+              {submission.status === "draft" && (
+                <Badge variant="warning">Draft - Not Submitted</Badge>
+              )}
+              {submission.status === "submitted" && (
+                <Badge variant="success">Successfully Submitted</Badge>
+              )}
+              {submission.status === "graded" && submission.grade && (
+                <Badge variant="primary">{submission.grade}/{assignment.points} pts</Badge>
+              )}
+            </div>
             
             <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-2">Submitted Content:</p>
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <p className="text-gray-700 whitespace-pre-wrap">{submission.content}</p>
+              {submission.content && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Written Response:</p>
+                  <div className="bg-gray-50 rounded-lg p-4 border">
+                    <p className="text-gray-700 whitespace-pre-wrap">{submission.content}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {submission.attachments && submission.attachments.length > 0 && (
                 <div>
-                  <p className="text-sm font-medium text-gray-700 mb-2">Attachments:</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Submitted Files:</p>
                   <div className="space-y-2">
                     {submission.attachments.map((file, index) => (
-                      <div key={index} className="flex items-center p-3 bg-white border border-gray-200 rounded-lg">
-                        <ApperIcon name="FileText" className="h-4 w-4 mr-2 text-gray-500" />
-                        <span className="text-sm text-gray-700">{file}</span>
+                      <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg">
+                        <div className="flex items-center">
+                          <ApperIcon name="FileText" className="h-4 w-4 mr-2 text-gray-500" />
+                          <span className="text-sm text-gray-700">{file}</span>
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <ApperIcon name="Download" className="h-4 w-4" />
+                        </Button>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center text-sm text-gray-600">
-                <ApperIcon name="Clock" className="h-4 w-4 mr-1" />
-                <span>Submitted on {format(new Date(submission.submittedAt), "PPP 'at' p")}</span>
-              </div>
+              {submission.links && submission.links.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Shared Links:</p>
+                  <div className="space-y-2">
+                    {submission.links.map((link, index) => (
+                      <div key={index} className="flex items-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <ApperIcon name="ExternalLink" className="h-4 w-4 mr-2 text-blue-500" />
+                        <span className="text-sm text-blue-700">{link}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {submission.submittedAt && (
+                <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                  <div className="flex items-center text-sm text-gray-600">
+                    <ApperIcon name="Clock" className="h-4 w-4 mr-1" />
+                    <span>
+                      {submission.status === "draft" 
+                        ? `Last saved on ${format(new Date(submission.submittedAt), "PPP 'at' p")}` 
+                        : `Submitted on ${format(new Date(submission.submittedAt), "PPP 'at' p")}`
+                      }
+                    </span>
+                  </div>
+                  {submission.status === "submitted" && !isPastDue && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleSubmitAssignment}
+                    >
+                      <ApperIcon name="Edit" className="h-4 w-4 mr-2" />
+                      Edit Submission
+                    </Button>
+                  )}
+                </div>
+              )}
 
               {submission.feedback && (
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-2">Teacher Feedback:</p>
                   <div className="bg-blue-50 border-l-4 border-l-blue-500 rounded-lg p-4">
-                    <p className="text-gray-700 italic">"{submission.feedback}"</p>
+                    <p className="text-gray-700 whitespace-pre-wrap">"{submission.feedback}"</p>
+                  </div>
+                </div>
+              )}
+
+              {submission.status === "graded" && submission.grade && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-green-800">Final Grade</p>
+                      <p className="text-2xl font-bold text-green-900">{submission.grade} / {assignment.points}</p>
+                      <p className="text-sm text-green-700">
+                        {((submission.grade / assignment.points) * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                    <ApperIcon name="Award" className="h-12 w-12 text-green-600" />
                   </div>
                 </div>
               )}

@@ -20,29 +20,103 @@ const AssignmentCard = ({
   const isDueSoon = isAfter(dueDate, now) && isBefore(dueDate, addDays(now, 3));
   const isPastDue = isBefore(dueDate, now);
   
-  const getStatusBadge = () => {
+const getStatusBadge = () => {
     if (userRole === "student") {
       if (!submission) {
         if (isPastDue) {
-          return <Badge variant="danger">Past Due</Badge>;
+          return <Badge variant="danger">Past Due - Not Submitted</Badge>;
         }
-        if (isDueSoon) {
-          return <Badge variant="warning">Due Soon</Badge>;
-        }
-        return <Badge variant="info">Pending</Badge>;
+        return <Badge variant="secondary">Not Started</Badge>;
       }
       
       switch (submission.status) {
         case "graded":
-          return <Badge variant="success">Graded</Badge>;
+          return <Badge variant="primary">Graded</Badge>;
         case "submitted":
-          return <Badge variant="primary">Submitted</Badge>;
+          return <Badge variant="success">Submitted</Badge>;
+        case "draft":
+          return <Badge variant="warning">In Progress</Badge>;
         default:
-          return <Badge variant="info">Pending</Badge>;
+          return <Badge variant="secondary">Not Started</Badge>;
       }
     }
     
     return <Badge variant="primary">{assignment.status}</Badge>;
+  };
+
+  const getActionButton = () => {
+    if (userRole !== "student") return null;
+
+    if (!submission) {
+      if (isPastDue) {
+        return null; // No action for past due assignments without submission
+      }
+      return (
+        <Button 
+          variant="primary" 
+          size="sm" 
+          onClick={() => onSubmit?.(assignment)}
+          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+        >
+          <ApperIcon name="Play" className="h-4 w-4 mr-2" />
+          Start Assignment
+        </Button>
+      );
+    }
+
+    switch (submission.status) {
+      case "graded":
+        return (
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={() => onView?.(assignment)}
+            className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+          >
+            <ApperIcon name="Eye" className="h-4 w-4 mr-2" />
+            View Grade
+          </Button>
+        );
+      
+      case "submitted":
+        return (
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={() => onView?.(assignment)}
+            className="bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+          >
+            <ApperIcon name="Eye" className="h-4 w-4 mr-2" />
+            View Submission
+          </Button>
+        );
+      
+      case "draft":
+        return (
+          <Button 
+            variant="warning" 
+            size="sm" 
+            onClick={() => onSubmit?.(assignment)}
+            className="bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100"
+          >
+            <ApperIcon name="Edit" className="h-4 w-4 mr-2" />
+            Continue
+          </Button>
+        );
+      
+      default:
+        return (
+          <Button 
+            variant="primary" 
+            size="sm" 
+            onClick={() => onSubmit?.(assignment)}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium transition-all duration-200 shadow-md hover:shadow-lg"
+          >
+            <ApperIcon name="Upload" className="h-4 w-4 mr-2" />
+            Submit Assignment
+          </Button>
+        );
+    }
   };
 
   const getGradeDisplay = () => {
@@ -112,41 +186,7 @@ const AssignmentCard = ({
               </>
             )}
             
-{userRole === "student" && !submission && !isPastDue && (
-              <Button 
-                variant="primary" 
-                size="sm" 
-                onClick={() => onSubmit?.(assignment)}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-medium transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <ApperIcon name="Upload" className="h-4 w-4 mr-2" />
-                Submit Assignment
-              </Button>
-            )}
-            
-            {userRole === "student" && submission && submission.status === "submitted" && (
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                disabled
-                className="bg-green-50 text-green-700 border-green-200"
-              >
-                <ApperIcon name="CheckCircle" className="h-4 w-4 mr-2" />
-                Submitted
-              </Button>
-            )}
-            
-            {userRole === "student" && submission && submission.status === "graded" && (
-              <Button 
-                variant="secondary" 
-                size="sm" 
-                onClick={() => onView?.(assignment)}
-                className="bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
-              >
-                <ApperIcon name="Eye" className="h-4 w-4 mr-2" />
-                View Grade
-              </Button>
-            )}
+{getActionButton()}
           </div>
         </div>
       </div>

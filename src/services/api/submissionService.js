@@ -49,11 +49,11 @@ class SubmissionService {
     const newId = Math.max(...this.submissions.map(s => s.Id)) + 1;
     const newSubmission = {
       Id: newId,
-      ...submissionData,
+...submissionData,
       submittedAt: new Date().toISOString(),
       grade: null,
       feedback: null,
-      status: "submitted"
+      status: submissionData.status || "submitted"
     };
     this.submissions.push(newSubmission);
     return { ...newSubmission };
@@ -65,7 +65,11 @@ class SubmissionService {
     if (index === -1) {
       throw new Error("Submission not found");
     }
-    this.submissions[index] = { ...this.submissions[index], ...submissionData };
+this.submissions[index] = { 
+      ...this.submissions[index], 
+      ...submissionData,
+      submittedAt: new Date().toISOString()
+    };
     return { ...this.submissions[index] };
   }
 

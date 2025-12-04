@@ -68,7 +68,7 @@ const mainRoutes = [
       </Suspense>
     )
   },
-  {
+{
     path: "assignments/:id/submit",
     element: (
       <Suspense fallback={<LoadingSpinner />}>
