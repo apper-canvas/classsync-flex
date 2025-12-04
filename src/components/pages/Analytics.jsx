@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import { format, subDays, startOfWeek, endOfWeek, eachDayOfInterval } from "date-fns";
+import { eachDayOfInterval, endOfWeek, format, startOfWeek, subDays } from "date-fns";
 import Chart from "react-apexcharts";
-import StatCard from "@/components/molecules/StatCard";
-import Card from "@/components/atoms/Card";
-import Select from "@/components/atoms/Select";
-import Loading from "@/components/ui/Loading";
-import ErrorView from "@/components/ui/ErrorView";
-import ApperIcon from "@/components/ApperIcon";
-import assignmentService from "@/services/api/assignmentService";
+import gradebookService from "@/services/api/gradebookService";
 import submissionService from "@/services/api/submissionService";
 import userService from "@/services/api/userService";
+import assignmentService from "@/services/api/assignmentService";
+import ApperIcon from "@/components/ApperIcon";
+import Loading from "@/components/ui/Loading";
+import ErrorView from "@/components/ui/ErrorView";
+import Select from "@/components/atoms/Select";
+import Card from "@/components/atoms/Card";
+import Assignments from "@/components/pages/Assignments";
+import StatCard from "@/components/molecules/StatCard";
 
 const Analytics = () => {
   const { currentRole } = useOutletContext();
@@ -133,7 +135,7 @@ const Analytics = () => {
     return subjectStats;
   };
 
-  const getOverallStats = () => {
+const getOverallStats = () => {
     const totalSubmissions = submissions.length;
     const pendingReviews = submissions.filter(s => s.status === "submitted").length;
     const avgGrade = submissions.filter(s => s.grade !== null).length > 0
@@ -148,6 +150,9 @@ const Analytics = () => {
       : 0;
     
     const completionRate = assignments.length > 0 && students.length > 0
+      ? Math.round((totalSubmissions / (assignments.length * students.length)) * 100)
+      : 0;
+const completionRate = assignments.length > 0 && students.length > 0
       ? Math.round((totalSubmissions / (assignments.length * students.length)) * 100)
       : 0;
 
@@ -212,7 +217,7 @@ const Analytics = () => {
     tooltip: {
       theme: "light"
     }
-  };
+};
 
   const gradeOptions = {
     chart: {
@@ -223,17 +228,45 @@ const Analytics = () => {
     labels: gradeDistribution.labels,
     colors: ["#10b981", "#2563eb", "#f59e0b", "#f97316", "#ef4444"],
     legend: {
-      position: "bottom"
+      position: "bottom",
+      fontSize: "14px"
     },
     plotOptions: {
       pie: {
         donut: {
-          size: "65%"
+          size: "65%",
+          labels: {
+            show: true,
+            name: {
+              show: true,
+              fontSize: "16px",
+              fontWeight: 600
+            },
+            value: {
+              show: true,
+              fontSize: "24px",
+              fontWeight: 700,
+              formatter: (val) => `${val}%`
+            },
+            total: {
+              show: true,
+              label: "Students",
+              fontSize: "14px",
+              fontWeight: 600,
+              color: "#6B7280"
+            }
+          }
         }
       }
     },
     tooltip: {
-      theme: "light"
+      theme: "light",
+      y: {
+        formatter: (val) => `${val} students (${Math.round((val / students.length) * 100)}%)`
+      }
+    },
+    dataLabels: {
+      enabled: false
     }
   };
 
@@ -307,20 +340,34 @@ const Analytics = () => {
           />
         </Card>
 
-        {/* Grade Distribution */}
+{/* Grade Distribution */}
         <Card className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center">
               <ApperIcon name="PieChart" className="h-5 w-5 mr-2" />
               Grade Distribution
             </h3>
+<div className="text-right">
+              <p className="text-sm text-gray-500">Class Average</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.avgGrade}%</p>
+            </div>
           </div>
-          <Chart
-            options={gradeOptions}
-            series={gradeDistribution.data}
-            type="donut"
-            height={350}
-          />
+          {gradeDistribution.data.every(val => val === 0) ? (
+            <div className="flex items-center justify-center h-80 text-gray-500">
+              <div className="text-center">
+                <ApperIcon name="BarChart3" className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                <p className="text-lg font-medium">No Grade Data Available</p>
+                <p className="text-sm mt-2">Grade distribution will appear once students have been graded</p>
+              </div>
+            </div>
+          ) : (
+            <Chart
+              options={gradeOptions}
+              series={gradeDistribution.data}
+              type="donut"
+              height={350}
+            />
+          )}
         </Card>
       </div>
 

@@ -253,6 +253,48 @@ class GradebookService {
     this.cache.gradebook = null;
     this.cache.lastUpdated = null;
   }
+// Get class average from student final grades
+  getClassAverage(studentRows) {
+    if (!studentRows || studentRows.length === 0) {
+      return 0;
+    }
+
+    const studentsWithGrades = studentRows.filter(row => 
+      row.finalGrade && row.finalGrade.percentage > 0
+    );
+
+    if (studentsWithGrades.length === 0) {
+      return 0;
+    }
+
+    const totalPercentage = studentsWithGrades.reduce((sum, row) => 
+      sum + row.finalGrade.percentage, 0
+    );
+
+    return Math.round(totalPercentage / studentsWithGrades.length);
+  }
+
+  // Get grade distribution for analytics
+  getGradeDistribution(studentRows) {
+    if (!studentRows || studentRows.length === 0) {
+      return { A: 0, B: 0, C: 0, D: 0, F: 0 };
+    }
+
+    const distribution = { A: 0, B: 0, C: 0, D: 0, F: 0 };
+
+    studentRows.forEach(row => {
+      if (row.finalGrade && row.finalGrade.percentage > 0) {
+        const percentage = row.finalGrade.percentage;
+        if (percentage >= 90) distribution.A++;
+        else if (percentage >= 80) distribution.B++;
+        else if (percentage >= 70) distribution.C++;
+        else if (percentage >= 60) distribution.D++;
+        else distribution.F++;
+      }
+    });
+
+    return distribution;
+  }
 }
 
 // Export singleton instance
