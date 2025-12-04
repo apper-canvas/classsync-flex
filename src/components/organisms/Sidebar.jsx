@@ -13,7 +13,8 @@ const Sidebar = ({ currentRole, className, isMobile = false, onClose }) => {
       return [
         ...baseItems,
 { path: "students", icon: "Users", label: "Students" },
-        { path: "grades", icon: "BookOpen", label: "Gradebook" },
+{ path: "grades", icon: "BookOpen", label: "Gradebook" },
+        { path: "calendar", icon: "Calendar", label: "Calendar" },
         { path: "analytics", icon: "BarChart3", label: "Analytics" }
       ];
     } else {

@@ -13,6 +13,7 @@ const Students = lazy(() => import("@/components/pages/Students"));
 const Grades = lazy(() => import("@/components/pages/Grades"));
 const Analytics = lazy(() => import("@/components/pages/Analytics"));
 const Resources = lazy(() => import("@/components/pages/Resources"));
+const Calendar = lazy(() => import("@/components/pages/Calendar"));
 const NotFound = lazy(() => import("@/components/pages/NotFound"));
 
 const LoadingSpinner = () => (
@@ -118,9 +119,17 @@ const mainRoutes = [
   },
   {
     path: "resources",
-    element: (
+element: (
       <Suspense fallback={<LoadingSpinner />}>
         <Resources />
+      </Suspense>
+    )
+  },
+  {
+    path: "calendar",
+    element: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <Calendar />
       </Suspense>
     )
   },

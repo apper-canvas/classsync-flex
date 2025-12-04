@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { format, isAfter, addDays } from "date-fns";
+import { format, isAfter, addDays, startOfDay } from "date-fns";
 import StatCard from "@/components/molecules/StatCard";
 import AssignmentCard from "@/components/molecules/AssignmentCard";
 import Button from "@/components/atoms/Button";
@@ -157,7 +157,7 @@ const Dashboard = () => {
           
           <div className="space-y-4">
             {upcomingAssignments.length === 0 ? (
-              <Empty 
+<Empty 
                 icon="FileText"
                 title="No assignments"
                 description="Create your first assignment to get started"
@@ -165,21 +165,36 @@ const Dashboard = () => {
                 onAction={() => navigate("assignments/new")}
               />
             ) : (
-              upcomingAssignments.slice(0, 3).map(assignment => (
-                <div key={assignment.Id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="font-medium text-gray-900">{assignment.title}</h3>
-                      <p className="text-sm text-gray-600">{assignment.subject}</p>
+              upcomingAssignments.slice(0, 3).map(assignment => {
+                const dueDate = new Date(assignment.dueDate);
+                const isDueSoon = isAfter(dueDate, new Date()) && isAfter(addDays(new Date(), 3), dueDate);
+                const isOverdue = isAfter(startOfDay(new Date()), startOfDay(dueDate));
+                
+                return (
+                  <div 
+                    key={assignment.Id} 
+                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/assignments/${assignment.Id}`)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h3 className="font-medium text-gray-900">{assignment.title}</h3>
+                        <p className="text-sm text-gray-600">{assignment.subject}</p>
+                      </div>
+                      <div className="flex flex-col items-end space-y-1">
+                        <Badge variant={isOverdue ? "destructive" : isDueSoon ? "warning" : "info"}>
+                          {isOverdue ? "Overdue" : isDueSoon ? "Due Soon" : "Upcoming"}
+                        </Badge>
+                        <span className="text-xs text-gray-500">{assignment.points} pts</span>
+                      </div>
                     </div>
-                    <Badge variant="info">{assignment.points} pts</Badge>
+                    <div className="mt-2 flex items-center text-sm text-gray-500">
+                      <ApperIcon name="Calendar" className="h-4 w-4 mr-1" />
+                      Due {format(dueDate, "MMM d")}
+                    </div>
                   </div>
-                  <div className="mt-2 flex items-center text-sm text-gray-500">
-                    <ApperIcon name="Calendar" className="h-4 w-4 mr-1" />
-                    Due {format(new Date(assignment.dueDate), "MMM d")}
-                  </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </Card>
@@ -278,7 +293,7 @@ const Dashboard = () => {
           <div className="space-y-4">
             {upcomingAssignments.length === 0 ? (
               <Empty 
-                icon="Calendar"
+icon="Calendar"
                 title="No upcoming assignments"
                 description="You're all caught up! Check back later for new assignments."
               />
@@ -287,17 +302,24 @@ const Dashboard = () => {
                 const submission = submissions.find(s => s.assignmentId === assignment.Id && s.studentId === 2);
                 const dueDate = new Date(assignment.dueDate);
                 const isDueSoon = isAfter(dueDate, new Date()) && isAfter(addDays(new Date(), 3), dueDate);
+                const isOverdue = isAfter(startOfDay(new Date()), startOfDay(dueDate));
                 
                 return (
-                  <div key={assignment.Id} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div 
+                    key={assignment.Id} 
+                    className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => navigate(`/assignments/${assignment.Id}`)}
+                  >
                     <div className="flex items-start justify-between">
                       <div>
                         <h3 className="font-medium text-gray-900">{assignment.title}</h3>
                         <p className="text-sm text-gray-600">{assignment.subject}</p>
                       </div>
                       <div className="flex flex-col items-end space-y-1">
-                        <Badge variant={!submission ? (isDueSoon ? "warning" : "info") : "success"}>
-                          {!submission ? (isDueSoon ? "Due Soon" : "Pending") : "Submitted"}
+                        <Badge variant={!submission ? (isOverdue ? "destructive" : isDueSoon ? "warning" : "info") : "success"}>
+                          {!submission 
+                            ? (isOverdue ? "Overdue" : isDueSoon ? "Due Soon" : "Pending") 
+                            : "Submitted"}
                         </Badge>
                         <span className="text-xs text-gray-500">{assignment.points} pts</span>
                       </div>

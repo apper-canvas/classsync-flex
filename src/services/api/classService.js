@@ -100,5 +100,4 @@ class ClassService {
     return { ...this.classes[index] };
   }
 }
-
 export default new ClassService();

@@ -76,6 +76,30 @@ class AssignmentService {
       .filter(a => a.status === "active" && new Date(a.dueDate) > now)
       .sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate))
       .map(a => ({ ...a }));
+}
+
+  async getCalendarAssignments() {
+    await delay(200);
+    return this.assignments
+      .filter(assignment => !assignment.isArchived)
+      .map(assignment => ({
+        ...assignment,
+        date: assignment.dueDate,
+        type: 'assignment'
+      }));
+  }
+
+  async getAssignmentsByDateRange(startDate, endDate) {
+    await delay(200);
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    return this.assignments
+      .filter(assignment => {
+        const dueDate = new Date(assignment.dueDate);
+        return dueDate >= start && dueDate <= end && !assignment.isArchived;
+      })
+      .map(assignment => ({ ...assignment }));
   }
 }
 
