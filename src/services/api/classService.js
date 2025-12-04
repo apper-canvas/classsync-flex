@@ -99,5 +99,53 @@ class ClassService {
     
     return { ...this.classes[index] };
   }
+async getClassSchedules() {
+    await delay(200);
+    // Return mock schedule data for classes
+    return [
+      {
+        id: 1,
+        classId: 1,
+        dayOfWeek: 'Monday',
+        startTime: '09:00',
+        endTime: '10:30'
+      },
+      {
+        id: 2,
+        classId: 2,
+        dayOfWeek: 'Monday',
+        startTime: '11:00',
+        endTime: '12:30'
+      },
+      {
+        id: 3,
+        classId: 1,
+        dayOfWeek: 'Wednesday',
+        startTime: '09:00',
+        endTime: '10:30'
+      },
+      {
+        id: 4,
+        classId: 3,
+        dayOfWeek: 'Tuesday',
+        startTime: '14:00',
+        endTime: '15:30'
+      },
+      {
+        id: 5,
+        classId: 2,
+        dayOfWeek: 'Thursday',
+        startTime: '11:00',
+        endTime: '12:30'
+      },
+      {
+        id: 6,
+        classId: 3,
+        dayOfWeek: 'Friday',
+        startTime: '14:00',
+        endTime: '15:30'
+      }
+    ];
+  }
 }
 export default new ClassService();
