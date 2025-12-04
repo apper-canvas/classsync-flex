@@ -1,27 +1,66 @@
 [
   {
     "Id": 1,
+"studentId": "john.doe@email.com",
     "assignmentId": 1,
-    "studentId": 2,
-    "content": "I have completed all 15 exercises from chapter 4. For problem 8, I used the substitution method because it seemed most straightforward with the given equations.",
-    "attachments": ["math_homework_alice.pdf"],
-    "submittedAt": "2024-12-15T20:30:00Z",
+    "content": "Here is my completed assignment on React components. I've implemented all the required functionality including state management, component composition, and proper error handling.",
+    "submittedAt": "2024-01-15T10:30:00Z",
+    "grade": 95,
+    "files": [
+      {
+        "id": "1-react-component",
+        "name": "react-component.jsx",
+        "size": 2048,
+        "type": "application/javascript"
+      }
+    ],
+    "fileCount": 1,
     "grade": 45,
     "feedback": "Great work on most problems! Check your algebra on problems 12 and 14.",
-    "status": "graded"
-  },
-  {
-    "Id": 2,
-    "assignmentId": 2,
-    "studentId": 2,
+    "status": "graded",
+"studentId": "jane.smith@email.com",
+    "assignmentId": 1,
+    "content": "My React components assignment submission. I focused on creating reusable components and implementing proper prop validation.",
+    "submittedAt": "2024-01-16T14:20:00Z",
+    "grade": 88,
+    "files": [
+      {
+        "id": "2-components-demo",
+        "name": "components-demo.pdf",
+        "size": 1536000,
+        "type": "application/pdf"
+      },
+      {
+        "id": "2-screenshot",
+        "name": "demo-screenshot.png",
+        "size": 256000,
+        "type": "image/png"
+      }
+    ],
+    "fileCount": 2,
     "content": "The Industrial Revolution fundamentally transformed society by introducing mass production, urbanization, and new social classes...",
     "attachments": ["industrial_revolution_essay.docx"],
     "submittedAt": "2024-12-20T18:45:00Z",
-    "grade": 88,
-    "feedback": "Well-researched essay with good analysis. Consider strengthening your conclusion.",
-    "status": "graded"
-  },
-  {
+"studentId": "bob.wilson@email.com",
+    "assignmentId": 2,
+    "content": "Database design assignment completed. I've created an ER diagram and normalized the database schema to 3NF.",
+    "submittedAt": "2024-01-18T16:45:00Z",
+    "grade": null,
+    "files": [
+      {
+        "id": "3-er-diagram",
+        "name": "er-diagram.pdf",
+        "size": 512000,
+        "type": "application/pdf"
+      },
+      {
+        "id": "3-schema-doc",
+        "name": "database-schema.docx",
+        "size": 128000,
+        "type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      }
+    ],
+    "fileCount": 2,
     "Id": 3,
     "assignmentId": 1,
     "studentId": 3,

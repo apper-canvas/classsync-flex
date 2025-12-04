@@ -1,39 +1,72 @@
-import { useState } from "react";
-import { toast } from "react-toastify";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { format } from "date-fns";
+import { FileUpload } from "@/components/atoms/FileUpload";
+import { FilePreview } from "@/components/molecules/FilePreview";
+import { toast } from "react-toastify";
+import { submissionService } from "@/services/api/submissionService";
+import ApperIcon from "@/components/ApperIcon";
+import Textarea from "@/components/atoms/Textarea";
 import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
 import Card from "@/components/atoms/Card";
 import Badge from "@/components/atoms/Badge";
 import FormField from "@/components/molecules/FormField";
-import ApperIcon from "@/components/ApperIcon";
-import submissionService from "@/services/api/submissionService";
 
 const SubmissionForm = ({ assignment, existingSubmission, studentId = 2, onSubmit, onCancel }) => {
-const [formData, setFormData] = useState({
+  const { submissionId, assignmentId } = useParams();
+  const navigate = useNavigate();
+  
+  const [formData, setFormData] = useState({
     content: existingSubmission?.content || "",
     attachments: existingSubmission?.attachments || [],
     links: existingSubmission?.links || [],
     comments: existingSubmission?.comments || ""
   });
-  
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
   const [lastSaved, setLastSaved] = useState(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
 
+  useEffect(() => {
+    const loadSubmission = async () => {
+if (submissionId) {
+        try {
+          const submission = await submissionService.getById(parseInt(submissionId));
+          if (submission) {
+            setFormData({
+              content: submission.content || "",
+              attachments: submission.attachments || [],
+              links: submission.links || [],
+              comments: submission.comments || ""
+            });
+          }
+        } catch (error) {
+          console.error("Error loading submission:", error);
+          toast.error("Failed to load submission");
+        }
+      }
+    };
+
+    loadSubmission();
+  }, [submissionId]);
+
   const validateForm = () => {
     const newErrors = {};
     
     if (!formData.content.trim() && formData.attachments.length === 0 && formData.links.length === 0) {
-      newErrors.content = "Please provide written work, attach files, or share links";
+      newErrors.content = "Please provide content, upload files, or add links for your submission";
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSaveAsDraft = async () => {
+  const handleFileAttach = () => {
+    const fileTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'jpg', 'png', 'zip'];
+    const randomType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
+const handleSaveAsDraft = async () => {
     setSaving(true);
     try {
       const submissionData = {
@@ -43,15 +76,15 @@ const [formData, setFormData] = useState({
         attachments: formData.attachments,
         links: formData.links,
         comments: formData.comments,
-        status: "draft"
+        isDraft: true
       };
 
       if (existingSubmission) {
-        await submissionService.update(existingSubmission.Id, submissionData);
+        await submissionService.update(existingSubmission.id, submissionData);
       } else {
         await submissionService.create(submissionData);
       }
-      
+
       setLastSaved(new Date());
       toast.success("Draft saved successfully!");
     } catch (error) {
@@ -62,7 +95,28 @@ const [formData, setFormData] = useState({
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleFilesChange = (files) => {
+    setFormData(prev => ({
+      ...prev,
+      files: files || []
+    }));
+  };
+
+  const handleFileRemove = (fileId) => {
+    setFormData(prev => ({
+      ...prev,
+      files: prev.files.filter(file => file.id !== fileId)
+    }));
+  };
+const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -84,30 +138,78 @@ const [formData, setFormData] = useState({
         attachments: formData.attachments,
         links: formData.links,
         comments: formData.comments,
-        status: "submitted"
+        isDraft: false,
+        submittedAt: new Date().toISOString()
       };
 
       if (existingSubmission) {
-        await submissionService.update(existingSubmission.Id, submissionData);
+        await submissionService.update(existingSubmission.id, submissionData);
         toast.success("Submission updated successfully!");
       } else {
         await submissionService.create(submissionData);
         toast.success("Assignment submitted successfully!");
       }
-      
-      onSubmit?.();
+
+      if (onSubmit) {
+        onSubmit(submissionData);
+      } else {
+        navigate('/submissions');
+      }
     } catch (error) {
       console.error("Error submitting assignment:", error);
-      toast.error("Failed to submit assignment. Please try again.");
+      toast.error("Failed to submit assignment");
     } finally {
       setLoading(false);
     }
   };
+<FormField label="Content" required>
+          <Textarea
+            name="content"
+            value={formData.content}
+            onChange={handleChange}
+            placeholder="Enter your submission content..."
+            rows={6}
+            required
+          />
+        </FormField>
 
-  const handleFileAttach = () => {
-    // Simulate file attachment
-    const fileTypes = ['pdf', 'docx', 'xlsx', 'pptx', 'jpg', 'png', 'zip'];
-    const randomType = fileTypes[Math.floor(Math.random() * fileTypes.length)];
+        <FormField label="Files" description="Upload supporting files for your submission">
+          <FileUpload
+            onFilesChange={handleFilesChange}
+            maxFiles={5}
+            maxSize={10485760} // 10MB
+            disabled={loading}
+          />
+        </FormField>
+
+        {formData.files.length > 0 && (
+          <div className="space-y-4">
+            <h4 className="text-sm font-medium text-gray-900">File Previews</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {formData.files.map(file => (
+                <FilePreview
+                  key={file.id}
+                  file={file}
+                  onRemove={handleFileRemove}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-6">
+          <Button
+            type="submit"
+            disabled={loading}
+            className="flex-1"
+          >
+            {loading ? (
+              <>
+                <ApperIcon name="Loader2" className="animate-spin mr-2" size={16} />
+                {submissionId ? 'Updating...' : 'Submitting...'}
+              </>
+            ) : (
+              submissionId ? 'Update Submission' : 'Submit Assignment'
     const fileName = `submission_${Date.now()}.${randomType}`;
     setFormData(prev => ({
       ...prev,

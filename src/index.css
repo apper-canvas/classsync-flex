@@ -66,6 +66,65 @@
 }
 
 /* Focus states */
+/* Focus states */
 .focus-ring {
   @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 focus:ring-opacity-50;
+}
+
+/* File Upload Styles */
+.file-upload-zone {
+  @apply border-2 border-dashed border-gray-300 rounded-xl p-8 text-center cursor-pointer transition-all duration-200;
+}
+
+.file-upload-zone:hover {
+  @apply border-primary-400 bg-primary-50;
+}
+
+.file-upload-zone.active {
+  @apply border-primary-500 bg-primary-100;
+}
+
+.file-upload-zone.error {
+  @apply border-red-400 bg-red-50;
+}
+
+.file-progress-bar {
+  @apply w-full h-2 bg-gray-200 rounded-full overflow-hidden;
+}
+
+.file-progress-fill {
+  @apply h-full bg-gradient-to-r from-primary-500 to-purple-500 transition-all duration-300 ease-out;
+}
+
+.file-item {
+  @apply flex items-center justify-between p-3 bg-gray-50 rounded-lg border transition-all duration-200;
+}
+
+.file-item:hover {
+  @apply bg-gray-100 border-gray-300;
+}
+
+.file-preview-container {
+  @apply relative w-full h-48 bg-gray-100 rounded-lg overflow-hidden border;
+}
+
+.file-preview-image {
+  @apply w-full h-full object-cover;
+}
+
+.file-preview-pdf {
+  @apply w-full h-full flex items-center justify-center bg-red-50;
+}
+
+.file-preview-default {
+  @apply w-full h-full flex items-center justify-center bg-gray-50;
+}
+
+@keyframes upload-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.upload-pulse {
+  animation: upload-pulse 1.5s ease-in-out infinite;
 }

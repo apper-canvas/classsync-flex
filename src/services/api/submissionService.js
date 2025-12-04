@@ -1,5 +1,4 @@
 import submissionsData from "@/services/mockData/submissions.json";
-
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 class SubmissionService {
@@ -21,18 +20,10 @@ class SubmissionService {
     return { ...submission };
   }
 
-  async getByAssignmentId(assignmentId) {
-    await delay(250);
-    return this.submissions
-      .filter(s => s.assignmentId === parseInt(assignmentId))
-      .map(s => ({ ...s }));
-  }
-
-  async getByStudentId(studentId) {
-    await delay(250);
-    return this.submissions
-      .filter(s => s.studentId === parseInt(studentId))
-      .map(s => ({ ...s }));
+async getByAssignmentId(assignmentId) {
+    await delay(200);
+    const submissions = this.submissions.filter(s => s.assignmentId === parseInt(assignmentId));
+    return submissions.map(s => ({ ...s }));
   }
 
   async getSubmission(assignmentId, studentId) {
@@ -41,19 +32,27 @@ class SubmissionService {
       s.assignmentId === parseInt(assignmentId) && 
       s.studentId === parseInt(studentId)
     );
-    return submission ? { ...submission } : null;
+    if (!submission) {
+      return null;
+    }
+    return { ...submission };
   }
 
   async create(submissionData) {
     await delay(400);
-    const newId = Math.max(...this.submissions.map(s => s.Id)) + 1;
+    if (!submissionData.assignmentId || !submissionData.studentId) {
+      throw new Error("Assignment ID and Student ID are required");
+    }
+
     const newSubmission = {
-      Id: newId,
-...submissionData,
+      Id: this.submissions.length > 0 ? Math.max(...this.submissions.map(s => s.Id)) + 1 : 1,
+      ...submissionData,
       submittedAt: new Date().toISOString(),
       grade: null,
       feedback: null,
-      status: submissionData.status || "submitted"
+      status: submissionData.status || "submitted",
+      files: submissionData.files || [],
+      fileCount: submissionData.files?.length || 0
     };
     this.submissions.push(newSubmission);
     return { ...newSubmission };
@@ -65,10 +64,12 @@ class SubmissionService {
     if (index === -1) {
       throw new Error("Submission not found");
     }
-this.submissions[index] = { 
+    this.submissions[index] = { 
       ...this.submissions[index], 
       ...submissionData,
-      submittedAt: new Date().toISOString()
+      files: submissionData.files || this.submissions[index].files || [],
+      fileCount: submissionData.files?.length || this.submissions[index].files?.length || 0,
+      updatedAt: new Date().toISOString()
     };
     return { ...this.submissions[index] };
   }
