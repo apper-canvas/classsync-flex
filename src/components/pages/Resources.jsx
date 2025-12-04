@@ -1,16 +1,20 @@
-import { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useOutletContext } from "react-router-dom";
-import Card from "@/components/atoms/Card";
-import Badge from "@/components/atoms/Badge";
-import Button from "@/components/atoms/Button";
-import Input from "@/components/atoms/Input";
-import Select from "@/components/atoms/Select";
+import FileUpload from "@/components/atoms/FileUpload";
+import { toast } from "react-toastify";
+import resourceService from "@/services/api/resourceService";
+import classService from "@/services/api/classService";
+import ApperIcon from "@/components/ApperIcon";
 import Loading from "@/components/ui/Loading";
 import ErrorView from "@/components/ui/ErrorView";
 import Empty from "@/components/ui/Empty";
-import ApperIcon from "@/components/ApperIcon";
-import { toast } from "react-toastify";
-
+import Textarea from "@/components/atoms/Textarea";
+import Select from "@/components/atoms/Select";
+import Label from "@/components/atoms/Label";
+import Button from "@/components/atoms/Button";
+import Input from "@/components/atoms/Input";
+import Card from "@/components/atoms/Card";
+import Badge from "@/components/atoms/Badge";
 const Resources = () => {
   const { currentRole } = useOutletContext();
   
@@ -20,98 +24,227 @@ const Resources = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("");
   const [filterSubject, setFilterSubject] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [showUploadForm, setShowUploadForm] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingResource, setEditingResource] = useState(null);
+  const [classes, setClasses] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [subjects, setSubjects] = useState([]);
+  const [types, setTypes] = useState([]);
 
-  // Mock resources data
-  const mockResources = [
-    {
-      Id: 1,
-      title: "Algebra Study Guide",
-      description: "Comprehensive guide covering linear equations, quadratic functions, and polynomial operations.",
-      type: "Study Guide",
-      subject: "Mathematics",
-      fileType: "PDF",
-      size: "2.4 MB",
-      uploadedAt: "2024-12-10T10:00:00Z",
-      downloadCount: 45
-    },
-    {
-      Id: 2,
-      title: "Chemistry Lab Safety Video",
-      description: "Important safety protocols and procedures for chemistry laboratory work.",
-      type: "Video",
-      subject: "Chemistry",
-      fileType: "MP4",
-      size: "156 MB",
-      uploadedAt: "2024-12-08T14:30:00Z",
-      downloadCount: 23
-    },
-    {
-      Id: 3,
-      title: "World War II Timeline",
-      description: "Interactive timeline showing major events and turning points of World War II.",
-      type: "Interactive Content",
-      subject: "History",
-      fileType: "HTML",
-      size: "5.1 MB",
-      uploadedAt: "2024-12-12T09:15:00Z",
-      downloadCount: 31
-    },
-    {
-      Id: 4,
-      title: "Physics Formula Sheet",
-      description: "Essential formulas for mechanics, thermodynamics, and electromagnetism.",
-      type: "Reference",
-      subject: "Physics",
-      fileType: "PDF",
-      size: "1.2 MB",
-      uploadedAt: "2024-12-05T16:20:00Z",
-      downloadCount: 67
-    },
-    {
-      Id: 5,
-      title: "English Literature Essay Examples",
-      description: "Sample essays analyzing themes in classic literature works.",
-      type: "Examples",
-      subject: "English Literature",
-      fileType: "DOCX",
-      size: "3.8 MB",
-      uploadedAt: "2024-12-07T11:45:00Z",
-      downloadCount: 52
-    },
-    {
-      Id: 6,
-      title: "Biology Cell Structure Diagram",
-      description: "Detailed diagrams of plant and animal cell structures with labels.",
-      type: "Diagram",
-      subject: "Biology",
-      fileType: "PNG",
-      size: "4.2 MB",
-      uploadedAt: "2024-12-09T13:30:00Z",
-      downloadCount: 38
-    }
+  // Upload form state
+  const [uploadData, setUploadData] = useState({
+    title: '',
+    description: '',
+    type: 'Document',
+    subject: '',
+    category: '',
+    visibility: 'public',
+    classId: '',
+    url: '', // For external links
+    isExternalLink: false
+  });
+  const [uploadFiles, setUploadFiles] = useState([]);
+  const [uploading, setUploading] = useState(false);
+
+  // Edit form state
+  const [editData, setEditData] = useState({
+    title: '',
+    description: '',
+    type: '',
+    subject: '',
+    category: '',
+    visibility: 'public',
+    classId: '',
+    url: ''
+  });
+
+  const resourceTypes = [
+    'Document', 'Video', 'Audio', 'Image', 'Presentation', 
+    'Spreadsheet', 'Study Guide', 'Reference', 'Examples', 
+    'Interactive Content', 'External Link'
   ];
 
-  useEffect(() => {
+  const visibilityOptions = [
+    { value: 'public', label: 'All Students' },
+    { value: 'class', label: 'Specific Class' },
+    { value: 'private', label: 'Private (Teachers Only)' }
+  ];
+useEffect(() => {
     loadResources();
-  }, []);
+    loadMetadata();
+  }, [currentRole]);
 
   const loadResources = async () => {
-    setLoading(true);
-    setError("");
-    
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 300));
-      setResources(mockResources);
+      setLoading(true);
+      const data = await resourceService.getAll();
+      setResources(data);
+      setError("");
     } catch (err) {
-      console.error("Error loading resources:", err);
       setError("Failed to load resources");
+      console.error('Error loading resources:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const getFilteredResources = () => {
+  const loadMetadata = async () => {
+    try {
+      const [classData, categoryData, subjectData, typeData] = await Promise.all([
+        classService.getAll(),
+        resourceService.getCategories(),
+        resourceService.getSubjects(),
+        resourceService.getTypes()
+      ]);
+      setClasses(classData);
+      setCategories(categoryData);
+      setSubjects(subjectData);
+      setTypes(typeData);
+    } catch (err) {
+      console.error('Error loading metadata:', err);
+    }
+  };
+
+  const handleUpload = async () => {
+    try {
+      if (!uploadData.title.trim()) {
+        toast.error("Please enter a title");
+        return;
+      }
+
+      if (!uploadData.isExternalLink && uploadFiles.length === 0) {
+        toast.error("Please select files to upload or add an external link");
+        return;
+      }
+
+      if (uploadData.isExternalLink && !uploadData.url.trim()) {
+        toast.error("Please enter a valid URL");
+        return;
+      }
+
+      setUploading(true);
+
+      if (uploadData.isExternalLink) {
+        // Handle external link
+        await resourceService.create({
+          ...uploadData,
+          fileType: 'External Link',
+          fileName: 'External Link',
+          fileSize: 0
+        });
+        toast.success("External link added successfully");
+      } else {
+        // Handle file uploads
+        for (const fileObj of uploadFiles) {
+          await resourceService.create({
+            ...uploadData,
+            fileName: fileObj.name,
+            fileSize: fileObj.size,
+            fileType: fileObj.type
+          });
+        }
+        toast.success(`${uploadFiles.length} file(s) uploaded successfully`);
+      }
+
+      // Reset form
+      setUploadData({
+        title: '',
+        description: '',
+        type: 'Document',
+        subject: '',
+        category: '',
+        visibility: 'public',
+        classId: '',
+        url: '',
+        isExternalLink: false
+      });
+      setUploadFiles([]);
+      setShowUploadForm(false);
+      
+      // Reload resources
+      loadResources();
+      
+    } catch (err) {
+      toast.error("Failed to upload resource");
+      console.error('Upload error:', err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEdit = (resource) => {
+    setEditingResource(resource);
+    setEditData({
+      title: resource.title,
+      description: resource.description,
+      type: resource.type,
+      subject: resource.subject,
+      category: resource.category || '',
+      visibility: resource.visibility,
+      classId: resource.classId || '',
+      url: resource.url || ''
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdate = async () => {
+    try {
+      if (!editData.title.trim()) {
+        toast.error("Please enter a title");
+        return;
+      }
+
+      await resourceService.update(editingResource.Id, editData);
+      toast.success("Resource updated successfully");
+      setShowEditModal(false);
+      setEditingResource(null);
+      loadResources();
+    } catch (err) {
+      toast.error("Failed to update resource");
+      console.error('Update error:', err);
+    }
+  };
+
+  const handleDelete = async (resource) => {
+    if (!confirm(`Are you sure you want to delete "${resource.title}"?`)) {
+      return;
+    }
+
+    try {
+      await resourceService.delete(resource.Id);
+      toast.success("Resource deleted successfully");
+      loadResources();
+    } catch (err) {
+      toast.error("Failed to delete resource");
+      console.error('Delete error:', err);
+    }
+  };
+
+  const handleDownload = async (resource) => {
+    try {
+      await resourceService.incrementDownload(resource.Id);
+      
+      if (resource.url && resource.fileType === 'External Link') {
+        window.open(resource.url, '_blank');
+        toast.success(`Opened ${resource.title}`);
+      } else {
+        toast.success(`Downloaded ${resource.title}`);
+      }
+      
+      // Update the download count in UI
+      setResources(prev => prev.map(r => 
+        r.Id === resource.Id 
+          ? { ...r, downloadCount: r.downloadCount + 1 }
+          : r
+      ));
+    } catch (err) {
+      toast.error("Failed to access resource");
+      console.error('Download error:', err);
+}
+  };
+const getFilteredResources = () => {
     let filtered = resources;
 
     // Filter by search term
@@ -133,6 +266,11 @@ const Resources = () => {
       filtered = filtered.filter(r => r.subject === filterSubject);
     }
 
+    // Filter by category
+    if (filterCategory) {
+      filtered = filtered.filter(r => r.category === filterCategory);
+    }
+
     // Sort by upload date (newest first)
     filtered.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt));
 
@@ -146,80 +284,251 @@ const Resources = () => {
   const getUniqueSubjects = () => {
     return [...new Set(resources.map(r => r.subject))].sort();
   };
-
-  const handleDownload = (resource) => {
-    // Simulate download
-    toast.success(`Downloading ${resource.title}`);
-    
-    // Update download count
-    setResources(prev => prev.map(r => 
-      r.Id === resource.Id 
-        ? { ...r, downloadCount: r.downloadCount + 1 }
-        : r
-    ));
-  };
-
-  const getFileIcon = (fileType) => {
-    switch (fileType.toLowerCase()) {
-      case "pdf":
-        return "FileText";
-      case "mp4":
-      case "avi":
-      case "mov":
-        return "Video";
-      case "docx":
-      case "doc":
-        return "File";
-      case "html":
-        return "Globe";
-      case "png":
-      case "jpg":
-      case "jpeg":
-        return "Image";
-      default:
-        return "Download";
-    }
+const getFileIcon = (fileType) => {
+    if (fileType === 'External Link') return 'ExternalLink';
+    if (fileType?.startsWith('image') || fileType === 'PNG' || fileType === 'JPG' || fileType === 'JPEG') return 'Image';
+    if (fileType === 'PDF' || fileType === 'application/pdf') return 'FileText';
+    if (fileType?.includes('video') || fileType === 'MP4') return 'Video';
+    if (fileType?.includes('audio') || fileType === 'MP3') return 'Music';
+    if (fileType?.includes('presentation') || fileType === 'PPTX') return 'Presentation';
+    if (fileType?.includes('spreadsheet') || fileType === 'XLSX') return 'Sheet';
+    return 'FileText';
   };
 
   const getTypeBadgeColor = (type) => {
-    switch (type) {
-      case "Study Guide":
-        return "primary";
-      case "Video":
-        return "purple";
-      case "Interactive Content":
-        return "success";
-      case "Reference":
-        return "info";
-      case "Examples":
-        return "warning";
-      case "Diagram":
-        return "danger";
-      default:
-        return "default";
-    }
+    const colors = {
+      'Study Guide': 'blue',
+      'Video': 'purple',
+      'Audio': 'green',
+      'Reference': 'amber',
+      'Examples': 'indigo',
+      'Interactive Content': 'pink',
+      'External Link': 'orange',
+      'Document': 'gray',
+      'Presentation': 'cyan'
+    };
+    return colors[type] || 'gray';
   };
 
-  if (currentRole !== "student") {
-    return <ErrorView error="Access denied. Only students can view resources." />;
+  if (loading) {
+    return <Loading />;
   }
 
-  if (loading) return <Loading type="skeleton" />;
-  if (error) return <ErrorView error={error} onRetry={loadResources} />;
-
-  const filteredResources = getFilteredResources();
+  if (error) {
+    return <ErrorView error={error} onRetry={loadResources} />;
+  }
+const filteredResources = getFilteredResources();
   const types = getUniqueTypes();
   const subjects = getUniqueSubjects();
-
   return (
-    <div className="space-y-6">
+<div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-          Learning Resources
-        </h1>
-        <p className="text-gray-600 mt-2">Access study materials, guides, and supplementary content</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
+            {currentRole === 'teacher' ? 'Resource Management' : 'Learning Resources'}
+          </h1>
+          <p className="text-gray-600 mt-2">
+            {currentRole === 'teacher' 
+              ? 'Upload, organize and manage class resources'
+              : 'Access study materials, guides, and supplementary content'
+            }
+          </p>
+        </div>
+        
+        {currentRole === 'teacher' && (
+          <Button 
+            onClick={() => setShowUploadForm(true)}
+            className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+          >
+            <ApperIcon name="Plus" className="h-4 w-4 mr-2" />
+            Add Resource
+          </Button>
+        )}
       </div>
+
+      {/* Teacher Upload Form */}
+      {currentRole === 'teacher' && showUploadForm && (
+        <Card className="p-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-semibold text-gray-900">Add New Resource</h2>
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowUploadForm(false)}
+              >
+                <ApperIcon name="X" className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    value={uploadData.title}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, title: e.target.value }))}
+                    placeholder="Enter resource title"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={uploadData.description}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, description: e.target.value }))}
+                    placeholder="Enter resource description"
+                    rows={3}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="type">Type</Label>
+                  <Select
+                    id="type"
+                    value={uploadData.type}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, type: e.target.value }))}
+                  >
+                    {resourceTypes.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="subject">Subject</Label>
+                  <Input
+                    id="subject"
+                    value={uploadData.subject}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, subject: e.target.value }))}
+                    placeholder="e.g., Mathematics, Chemistry"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Input
+                    id="category"
+                    value={uploadData.category}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, category: e.target.value }))}
+                    placeholder="e.g., Study Materials, Reference"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="visibility">Visibility</Label>
+                  <Select
+                    id="visibility"
+                    value={uploadData.visibility}
+                    onChange={(e) => setUploadData(prev => ({ ...prev, visibility: e.target.value }))}
+                  >
+                    {visibilityOptions.map(option => (
+                      <option key={option.value} value={option.value}>{option.label}</option>
+                    ))}
+                  </Select>
+                </div>
+
+                {uploadData.visibility === 'class' && (
+                  <div>
+                    <Label htmlFor="classId">Select Class</Label>
+                    <Select
+                      id="classId"
+                      value={uploadData.classId}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, classId: e.target.value }))}
+                    >
+                      <option value="">Select a class</option>
+                      {classes.map(cls => (
+                        <option key={cls.Id} value={cls.Id}>{cls.name}</option>
+                      ))}
+                    </Select>
+                  </div>
+                )}
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="isExternalLink"
+                    checked={uploadData.isExternalLink}
+                    onChange={(e) => setUploadData(prev => ({ 
+                      ...prev, 
+                      isExternalLink: e.target.checked,
+                      type: e.target.checked ? 'External Link' : 'Document'
+                    }))}
+                    className="rounded border-gray-300"
+                  />
+                  <Label htmlFor="isExternalLink">External Link</Label>
+                </div>
+
+                {uploadData.isExternalLink ? (
+                  <div>
+                    <Label htmlFor="url">URL</Label>
+                    <Input
+                      id="url"
+                      type="url"
+                      value={uploadData.url}
+                      onChange={(e) => setUploadData(prev => ({ ...prev, url: e.target.value }))}
+                      placeholder="https://example.com"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <Label>Files</Label>
+                    <FileUpload
+                      onFilesChange={setUploadFiles}
+                      accept={{
+                        'application/pdf': ['.pdf'],
+                        'application/msword': ['.doc'],
+                        'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+                        'application/vnd.ms-powerpoint': ['.ppt'],
+                        'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx'],
+                        'application/vnd.ms-excel': ['.xls'],
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                        'text/*': ['.txt', '.csv'],
+                        'image/*': ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
+                        'video/*': ['.mp4', '.avi', '.mov'],
+                        'audio/*': ['.mp3', '.wav', '.ogg']
+                      }}
+                      maxSize={50485760} // 50MB
+                      maxFiles={10}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => setShowUploadForm(false)}
+                disabled={uploading}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleUpload}
+                disabled={uploading}
+                className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+              >
+                {uploading ? (
+                  <>
+                    <ApperIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <ApperIcon name="Upload" className="h-4 w-4 mr-2" />
+                    Upload
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -255,7 +564,7 @@ const Resources = () => {
               <ApperIcon name="Folder" className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{subjects.length}</p>
+<p className="text-2xl font-bold text-gray-900">{[...new Set(resources.map(r => r.subject))].length}</p>
               <p className="text-sm text-gray-600">Subjects</p>
             </div>
           </div>
@@ -267,14 +576,14 @@ const Resources = () => {
               <ApperIcon name="Star" className="h-6 w-6 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{types.length}</p>
+              <p className="text-2xl font-bold text-gray-900">{[...new Set(resources.map(r => r.type))].length}</p>
               <p className="text-sm text-gray-600">Resource Types</p>
             </div>
           </div>
         </Card>
       </div>
 
-      {/* Filters */}
+{/* Filters */}
       <Card className="p-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
@@ -292,10 +601,10 @@ const Resources = () => {
           <Select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="w-full sm:w-48"
+className="w-full sm:w-40"
           >
             <option value="">All Types</option>
-            {types.map(type => (
+            {[...new Set(resources.map(r => r.type))].sort().map(type => (
               <option key={type} value={type}>{type}</option>
             ))}
           </Select>
@@ -303,22 +612,33 @@ const Resources = () => {
           <Select
             value={filterSubject}
             onChange={(e) => setFilterSubject(e.target.value)}
-            className="w-full sm:w-48"
+            className="w-full sm:w-40"
           >
             <option value="">All Subjects</option>
-            {subjects.map(subject => (
+            {[...new Set(resources.map(r => r.subject))].sort().map(subject => (
               <option key={subject} value={subject}>{subject}</option>
+            ))}
+          </Select>
+
+          <Select
+            value={filterCategory}
+            onChange={(e) => setFilterCategory(e.target.value)}
+            className="w-full sm:w-40"
+>
+            <option value="">All Categories</option>
+            {[...new Set(resources.map(r => r.category).filter(Boolean))].sort().map(category => (
+              <option key={category} value={category}>{category}</option>
             ))}
           </Select>
         </div>
       </Card>
 
-      {/* Resources Grid */}
+{/* Resources Display */}
       {filteredResources.length === 0 ? (
         <Empty 
           icon="BookOpen"
-          title={searchTerm || filterType || filterSubject ? "No matching resources found" : "No resources available"}
-          description={searchTerm || filterType || filterSubject ? "Try adjusting your search criteria" : "Check back later for new learning materials"}
+          title={searchTerm || filterType || filterSubject || filterCategory ? "No matching resources found" : "No resources available"}
+          description={searchTerm || filterType || filterSubject || filterCategory ? "Try adjusting your search criteria" : "Check back later for new learning materials"}
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -333,18 +653,29 @@ const Resources = () => {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-gray-900 truncate">{resource.title}</h3>
                       <p className="text-sm text-gray-600">{resource.subject}</p>
+                      {resource.category && (
+                        <p className="text-xs text-gray-500">{resource.category}</p>
+                      )}
                     </div>
                   </div>
-                  <Badge variant={getTypeBadgeColor(resource.type)}>
-                    {resource.type}
-                  </Badge>
+                  <div className="flex flex-col items-end space-y-1">
+                    <Badge variant={getTypeBadgeColor(resource.type)}>
+                      {resource.type}
+                    </Badge>
+                    {resource.visibility === 'class' && (
+                      <Badge variant="amber" size="sm">Class Only</Badge>
+                    )}
+                    {resource.visibility === 'private' && (
+                      <Badge variant="red" size="sm">Private</Badge>
+                    )}
+                  </div>
                 </div>
 
                 <p className="text-sm text-gray-700 line-clamp-2">{resource.description}</p>
 
                 <div className="flex items-center justify-between text-xs text-gray-500">
                   <div className="flex items-center space-x-4">
-                    <span>{resource.fileType.toUpperCase()}</span>
+                    <span>{resource.fileType?.toUpperCase() || 'UNKNOWN'}</span>
                     <span>{resource.size}</span>
                   </div>
                   <div className="flex items-center">
@@ -354,27 +685,208 @@ const Resources = () => {
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => toast.info(`Previewing ${resource.title}`)}
-                  >
-                    <ApperIcon name="Eye" className="h-4 w-4 mr-1" />
-                    Preview
-                  </Button>
+                  <div className="flex space-x-2">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => toast.info(`Previewing ${resource.title}`)}
+                    >
+                      <ApperIcon name="Eye" className="h-4 w-4 mr-1" />
+                      Preview
+                    </Button>
+                    
+                    {currentRole === 'teacher' && (
+                      <>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEdit(resource)}
+                        >
+                          <ApperIcon name="Edit" className="h-4 w-4 mr-1" />
+                          Edit
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleDelete(resource)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <ApperIcon name="Trash2" className="h-4 w-4 mr-1" />
+                          Delete
+                        </Button>
+                      </>
+                    )}
+                  </div>
 
                   <Button 
                     variant="purple" 
                     size="sm"
                     onClick={() => handleDownload(resource)}
                   >
-                    <ApperIcon name="Download" className="h-4 w-4 mr-1" />
-                    Download
+                    <ApperIcon name={resource.fileType === 'External Link' ? 'ExternalLink' : 'Download'} className="h-4 w-4 mr-1" />
+                    {resource.fileType === 'External Link' ? 'Open' : 'Download'}
                   </Button>
                 </div>
               </div>
             </Card>
           ))}
+        </div>
+      )}
+
+      {/* Edit Resource Modal */}
+      {showEditModal && editingResource && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <Card className="p-6">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Edit Resource</h2>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowEditModal(false)}
+                  >
+                    <ApperIcon name="X" className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="edit-title">Title *</Label>
+                      <Input
+                        id="edit-title"
+                        value={editData.title}
+                        onChange={(e) => setEditData(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Enter resource title"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="edit-description">Description</Label>
+                      <Textarea
+                        id="edit-description"
+                        value={editData.description}
+                        onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Enter resource description"
+                        rows={3}
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="edit-type">Type</Label>
+                      <Select
+                        id="edit-type"
+                        value={editData.type}
+                        onChange={(e) => setEditData(prev => ({ ...prev, type: e.target.value }))}
+                      >
+                        {resourceTypes.map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="edit-subject">Subject</Label>
+                      <Input
+                        id="edit-subject"
+                        value={editData.subject}
+                        onChange={(e) => setEditData(prev => ({ ...prev, subject: e.target.value }))}
+                        placeholder="e.g., Mathematics, Chemistry"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="edit-category">Category</Label>
+                      <Input
+                        id="edit-category"
+                        value={editData.category}
+                        onChange={(e) => setEditData(prev => ({ ...prev, category: e.target.value }))}
+                        placeholder="e.g., Study Materials, Reference"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="edit-visibility">Visibility</Label>
+                      <Select
+                        id="edit-visibility"
+                        value={editData.visibility}
+                        onChange={(e) => setEditData(prev => ({ ...prev, visibility: e.target.value }))}
+                      >
+                        {visibilityOptions.map(option => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </Select>
+                    </div>
+
+                    {editData.visibility === 'class' && (
+                      <div>
+                        <Label htmlFor="edit-classId">Select Class</Label>
+                        <Select
+                          id="edit-classId"
+                          value={editData.classId}
+                          onChange={(e) => setEditData(prev => ({ ...prev, classId: e.target.value }))}
+                        >
+                          <option value="">Select a class</option>
+                          {classes.map(cls => (
+                            <option key={cls.Id} value={cls.Id}>{cls.name}</option>
+                          ))}
+                        </Select>
+                      </div>
+                    )}
+
+                    {editingResource.fileType === 'External Link' && (
+                      <div>
+                        <Label htmlFor="edit-url">URL</Label>
+                        <Input
+                          id="edit-url"
+                          type="url"
+                          value={editData.url}
+                          onChange={(e) => setEditData(prev => ({ ...prev, url: e.target.value }))}
+                          placeholder="https://example.com"
+                        />
+                      </div>
+                    )}
+
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="text-sm font-medium text-gray-900 mb-2">File Information</h4>
+                      <p className="text-sm text-gray-600">
+                        <strong>Type:</strong> {editingResource.fileType}
+                      </p>
+                      {editingResource.fileName && (
+                        <p className="text-sm text-gray-600">
+                          <strong>File:</strong> {editingResource.fileName}
+                        </p>
+                      )}
+                      <p className="text-sm text-gray-600">
+                        <strong>Size:</strong> {editingResource.size}
+                      </p>
+                      <p className="text-sm text-gray-600">
+                        <strong>Downloads:</strong> {editingResource.downloadCount}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => setShowEditModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={handleUpdate}
+                    className="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800"
+                  >
+                    <ApperIcon name="Save" className="h-4 w-4 mr-2" />
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
       )}
     </div>
