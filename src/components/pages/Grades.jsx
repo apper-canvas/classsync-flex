@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import { toast } from "react-toastify";
 import gradebookService from "@/services/api/gradebookService";
 import submissionService from "@/services/api/submissionService";
+import userService from "@/services/api/userService";
 import assignmentService from "@/services/api/assignmentService";
 import ApperIcon from "@/components/ApperIcon";
 import Loading from "@/components/ui/Loading";
@@ -21,14 +22,21 @@ import Students from "@/components/pages/Students";
 const Grades = () => {
   const { currentRole } = useOutletContext();
   const [gradebookData, setGradebookData] = useState(null);
+  const [studentGrades, setStudentGrades] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingCell, setEditingCell] = useState(null);
   const [editingValue, setEditingValue] = useState('');
+  const [expandedClasses, setExpandedClasses] = useState(new Set());
 
   useEffect(() => {
-    loadGradebook();
-  }, []);
+    if (currentRole === 'teacher') {
+      loadGradebook();
+    } else {
+      loadStudentGrades();
+    }
+}, [currentRole]);
 
   const loadGradebook = async () => {
     try {
@@ -42,6 +50,32 @@ const Grades = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadStudentGrades = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const user = await userService.getCurrentUser();
+      setCurrentUser(user);
+      const grades = await gradebookService.getStudentGrades(user.Id);
+      setStudentGrades(grades);
+    } catch (err) {
+      console.error('Error loading student grades:', err);
+      setError(err.message || 'Failed to load grades');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleClassExpansion = (teacherId) => {
+    const newExpanded = new Set(expandedClasses);
+    if (newExpanded.has(teacherId)) {
+      newExpanded.delete(teacherId);
+    } else {
+      newExpanded.add(teacherId);
+    }
+    setExpandedClasses(newExpanded);
   };
 
   const handleCellClick = (studentId, assignmentId, currentGrade, maxPoints) => {
@@ -89,6 +123,28 @@ const Grades = () => {
       handleCellCancel();
     }
   };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'graded':
+        return <ApperIcon name="CheckCircle" className="h-4 w-4 text-green-600" />;
+      case 'pending':
+        return <ApperIcon name="Clock" className="h-4 w-4 text-amber-600" />;
+      default:
+        return <ApperIcon name="X" className="h-4 w-4 text-red-600" />;
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'graded':
+        return 'Graded ✅';
+      case 'pending':
+        return 'Pending ⏳';
+      default:
+        return 'Missing ❌';
+    }
+};
 
   const renderGradeCell = (gradeData, student) => {
     const { assignmentId, grade, maxPoints } = gradeData;
@@ -145,26 +201,200 @@ const Grades = () => {
     );
   };
 
-  if (currentRole !== 'teacher') {
+  // Render student view
+  const renderStudentGrades = () => {
+    if (!studentGrades || studentGrades.length === 0) {
+      return (
+        <Empty 
+          icon="BookOpen" 
+          title="No Grades Available"
+          description="You are not enrolled in any classes or no assignments have been created yet."
+        />
+      );
+    }
+
     return (
-      <div className="text-center py-12">
-        <ApperIcon name="Lock" className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Access Restricted</h2>
-        <p className="text-gray-600">
-          The gradebook is only accessible to teachers.
-        </p>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 flex items-center">
+              <ApperIcon name="BookOpen" className="h-7 w-7 mr-3 text-primary-600" />
+              My Grades
+            </h1>
+            <p className="text-gray-600 mt-1">
+              View your academic progress across all classes
+            </p>
+          </div>
+          <Button onClick={loadStudentGrades} variant="secondary" size="sm">
+            <ApperIcon name="RefreshCw" className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+
+        {/* Grade Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Card className="p-6">
+            <div className="flex items-center">
+              <ApperIcon name="BookOpen" className="h-8 w-8 text-blue-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Total Classes</p>
+                <p className="text-2xl font-bold">{studentGrades.length}</p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <div className="flex items-center">
+              <ApperIcon name="Target" className="h-8 w-8 text-green-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Average Grade</p>
+                <p className="text-2xl font-bold">
+                  {studentGrades.length > 0 
+                    ? Math.round(studentGrades.reduce((sum, cls) => sum + cls.currentGrade.percentage, 0) / studentGrades.length) + '%'
+                    : 'N/A'
+                  }
+                </p>
+              </div>
+            </div>
+          </Card>
+          
+          <Card className="p-6">
+            <div className="flex items-center">
+              <ApperIcon name="CheckCircle" className="h-8 w-8 text-purple-600 mr-3" />
+              <div>
+                <p className="text-sm text-gray-600">Assignments Graded</p>
+                <p className="text-2xl font-bold">
+                  {studentGrades.reduce((sum, cls) => sum + cls.assignments.filter(a => a.status === 'graded').length, 0)}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Classes */}
+        <div className="space-y-4">
+          {studentGrades.map((classData) => (
+            <Card key={classData.teacher.Id} className="overflow-hidden">
+              {/* Class Header */}
+              <div 
+                className="p-6 cursor-pointer hover:bg-gray-50 transition-colors"
+                onClick={() => toggleClassExpansion(classData.teacher.Id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-lg">
+                        {classData.teacher.name.split(' ').map(n => n[0]).join('')}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{classData.className}</h3>
+                      <p className="text-sm text-gray-600">Teacher: {classData.teacher.name}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-2xl font-bold text-gray-900">{classData.currentGrade.letter}</span>
+                        <span className="text-lg text-gray-600">({classData.currentGrade.percentage}%)</span>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {classData.currentGrade.points}/{classData.currentGrade.totalPoints} points
+                      </p>
+                    </div>
+                    <ApperIcon 
+                      name={expandedClasses.has(classData.teacher.Id) ? "ChevronUp" : "ChevronDown"} 
+                      className="h-5 w-5 text-gray-500" 
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Assignment Details */}
+              {expandedClasses.has(classData.teacher.Id) && (
+                <div className="border-t bg-gray-50">
+                  <div className="p-6">
+                    <h4 className="text-md font-semibold text-gray-900 mb-4">Assignment Details</h4>
+                    <div className="space-y-3">
+                      {classData.assignments.map((assignment) => (
+                        <div key={assignment.Id} className="bg-white rounded-lg p-4 border">
+                          <div className="flex items-center justify-between mb-2">
+                            <h5 className="font-medium text-gray-900">{assignment.title}</h5>
+                            <div className="flex items-center space-x-2">
+                              {getStatusIcon(assignment.status)}
+                              <Badge variant={assignment.status === 'graded' ? 'success' : assignment.status === 'pending' ? 'warning' : 'secondary'}>
+                                {getStatusText(assignment.status)}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
+                            <div>
+                              <p className="text-gray-500">Grade</p>
+                              <p className="font-medium">
+                                {assignment.grade !== null 
+                                  ? `${assignment.grade}/${assignment.points} (${Math.round((assignment.grade / assignment.points) * 100)}%)`
+                                  : 'Not graded'
+                                }
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-gray-500">Due Date</p>
+                              <p className="font-medium">{format(new Date(assignment.dueDate), 'MMM d, yyyy')}</p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-gray-500">Submitted</p>
+                              <p className="font-medium">
+                                {assignment.submittedAt 
+                                  ? format(new Date(assignment.submittedAt), 'MMM d, yyyy')
+                                  : 'Not submitted'
+                                }
+                              </p>
+                            </div>
+                            
+                            <div>
+                              <p className="text-gray-500">Points</p>
+                              <p className="font-medium">{assignment.points} pts</p>
+                            </div>
+                          </div>
+                          
+                          {assignment.feedback && (
+                            <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                              <p className="text-sm text-gray-600 font-medium mb-1">Teacher Feedback:</p>
+                              <p className="text-sm text-gray-800">{assignment.feedback}</p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Card>
+          ))}
+        </div>
       </div>
     );
-  }
+};
 
   if (loading) {
     return <Loading className="min-h-96" />;
   }
 
   if (error) {
-    return <ErrorView error={error} onRetry={loadGradebook} />;
+    return <ErrorView error={error} onRetry={currentRole === 'teacher' ? loadGradebook : loadStudentGrades} />;
   }
 
+  // Render student view for non-teachers
+  if (currentRole !== 'teacher') {
+    return renderStudentGrades();
+  }
+
+  // Teacher view continues as before
   if (!gradebookData || gradebookData.studentRows.length === 0) {
     return (
       <div className="text-center py-12">
@@ -345,7 +575,7 @@ const Grades = () => {
         </div>
       </Card>
     </div>
-);
+  );
 };
 
 export default Grades;

@@ -11,7 +11,7 @@ class GradebookService {
   }
 
   // Get complete gradebook data with students, assignments, and grades
-  async getGradebookData() {
+async getGradebookData() {
     try {
       const [assignments, students, submissions] = await Promise.all([
         assignmentService.getAll(),
@@ -29,6 +29,103 @@ class GradebookService {
       console.error('Error loading gradebook data:', error);
       throw error;
     }
+  }
+
+  // Get grades for a specific student
+  async getStudentGrades(studentId) {
+    try {
+      const [assignments, submissions, currentUser] = await Promise.all([
+        assignmentService.getAll(),
+        submissionService.getAll(),
+        userService.getCurrentUser()
+      ]);
+
+      // Filter submissions for the specific student
+      const studentSubmissions = submissions.filter(s => s.studentId === parseInt(studentId));
+
+      // Group assignments by class (using teacherId as class identifier)
+      const classesByTeacher = {};
+      const teacherInfo = {};
+
+      for (const assignment of assignments) {
+        if (!classesByTeacher[assignment.teacherId]) {
+          classesByTeacher[assignment.teacherId] = [];
+        }
+        classesByTeacher[assignment.teacherId].push(assignment);
+      }
+
+      // Get teacher information
+      const allUsers = await userService.getAll();
+      allUsers.forEach(user => {
+        if (user.role === 'teacher') {
+          teacherInfo[user.Id] = user;
+        }
+      });
+
+      // Build student grade data for each class
+      const studentClasses = [];
+      for (const [teacherId, classAssignments] of Object.entries(classesByTeacher)) {
+        const teacher = teacherInfo[teacherId];
+        if (!teacher) continue;
+
+        const assignmentsWithGrades = classAssignments.map(assignment => {
+          const submission = studentSubmissions.find(s => s.assignmentId === assignment.Id);
+          
+          let status = 'missing';
+          if (submission) {
+            if (submission.grade !== null && submission.grade !== undefined) {
+              status = 'graded';
+            } else if (submission.status === 'submitted') {
+              status = 'pending';
+            }
+          }
+
+          return {
+            ...assignment,
+            submission,
+            grade: submission?.grade || null,
+            status,
+            feedback: submission?.feedback || null,
+            submittedAt: submission?.submittedAt || null
+          };
+        });
+
+        const classGrade = this.calculateClassGrade(assignmentsWithGrades);
+        
+        studentClasses.push({
+          teacher,
+          className: `${teacher.name}'s Class`,
+          assignments: assignmentsWithGrades.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
+          currentGrade: classGrade
+        });
+      }
+
+      return studentClasses;
+    } catch (error) {
+      console.error('Error loading student grades:', error);
+      throw error;
+    }
+  }
+
+  // Calculate overall class grade for a student
+  calculateClassGrade(assignments) {
+    const gradedAssignments = assignments.filter(a => a.grade !== null && a.grade !== undefined);
+    
+    if (gradedAssignments.length === 0) {
+      return { percentage: 0, letter: 'N/A', points: 0, totalPoints: 0 };
+    }
+
+    const totalPoints = gradedAssignments.reduce((sum, a) => sum + a.points, 0);
+    const earnedPoints = gradedAssignments.reduce((sum, a) => sum + (a.grade || 0), 0);
+    const percentage = Math.round((earnedPoints / totalPoints) * 100);
+    const letter = this.getLetterGrade(percentage);
+
+    return {
+      percentage,
+      letter,
+      points: earnedPoints,
+      totalPoints
+    };
   }
 
   // Build the gradebook matrix structure
