@@ -18,7 +18,6 @@ import Badge from "@/components/atoms/Badge";
 import Assignments from "@/components/pages/Assignments";
 import Students from "@/components/pages/Students";
 
-
 const Grades = () => {
   const { currentRole } = useOutletContext();
   const [gradebookData, setGradebookData] = useState(null);
@@ -29,7 +28,7 @@ const Grades = () => {
   const [editingCell, setEditingCell] = useState(null);
   const [editingValue, setEditingValue] = useState('');
   const [expandedClasses, setExpandedClasses] = useState(new Set());
-
+  const [expandedCategories, setExpandedCategories] = useState(new Set());
   useEffect(() => {
     if (currentRole === 'teacher') {
       loadGradebook();
@@ -232,45 +231,190 @@ const Grades = () => {
           </Button>
         </div>
 
-        {/* Grade Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card className="p-6">
-            <div className="flex items-center">
-              <ApperIcon name="BookOpen" className="h-8 w-8 text-blue-600 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Total Classes</p>
-                <p className="text-2xl font-bold">{studentGrades.length}</p>
-              </div>
-            </div>
-          </Card>
+{/* Overall GPA Summary */}
+        {(() => {
+          const overallGPA = gradebookService.calculateStudentGPA(studentGrades);
+          const categoryBreakdown = gradebookService.getCategoryBreakdown(studentGrades);
           
-          <Card className="p-6">
-            <div className="flex items-center">
-              <ApperIcon name="Target" className="h-8 w-8 text-green-600 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Average Grade</p>
-                <p className="text-2xl font-bold">
-                  {studentGrades.length > 0 
-                    ? Math.round(studentGrades.reduce((sum, cls) => sum + cls.currentGrade.percentage, 0) / studentGrades.length) + '%'
-                    : 'N/A'
-                  }
-                </p>
+          return (
+            <>
+              {/* GPA Stats */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <Card className="p-6">
+                  <div className="flex items-center">
+                    <ApperIcon name="Award" className="h-8 w-8 text-amber-600 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-600">Overall GPA</p>
+                      <p className="text-2xl font-bold">{overallGPA.gpa} <span className="text-lg font-medium text-gray-600">({overallGPA.letterGrade})</span></p>
+                    </div>
+                  </div>
+                </Card>
+                
+                <Card className="p-6">
+                  <div className="flex items-center">
+                    <ApperIcon name="BookOpen" className="h-8 w-8 text-blue-600 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-600">Total Classes</p>
+                      <p className="text-2xl font-bold">{studentGrades.length}</p>
+                    </div>
+                  </div>
+                </Card>
+                
+                <Card className="p-6">
+                  <div className="flex items-center">
+                    <ApperIcon name="Target" className="h-8 w-8 text-green-600 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-600">Average Grade</p>
+                      <p className="text-2xl font-bold">
+                        {studentGrades.length > 0 
+                          ? Math.round(studentGrades.reduce((sum, cls) => sum + cls.currentGrade.percentage, 0) / studentGrades.length) + '%'
+                          : 'N/A'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+                
+                <Card className="p-6">
+                  <div className="flex items-center">
+                    <ApperIcon name="CheckCircle" className="h-8 w-8 text-purple-600 mr-3" />
+                    <div>
+                      <p className="text-sm text-gray-600">Assignments Graded</p>
+                      <p className="text-2xl font-bold">
+                        {studentGrades.reduce((sum, cls) => sum + cls.assignments.filter(a => a.status === 'graded').length, 0)}
+                      </p>
+                    </div>
+                  </div>
+                </Card>
               </div>
-            </div>
-          </Card>
-          
-          <Card className="p-6">
-            <div className="flex items-center">
-              <ApperIcon name="CheckCircle" className="h-8 w-8 text-purple-600 mr-3" />
-              <div>
-                <p className="text-sm text-gray-600">Assignments Graded</p>
-                <p className="text-2xl font-bold">
-                  {studentGrades.reduce((sum, cls) => sum + cls.assignments.filter(a => a.status === 'graded').length, 0)}
-                </p>
-              </div>
-            </div>
-          </Card>
-        </div>
+
+              {/* Category Breakdown */}
+              {categoryBreakdown.length > 0 && (
+                <Card className="p-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                      <ApperIcon name="BarChart3" className="h-5 w-5 mr-2" />
+                      Grade Breakdown by Category
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setExpandedCategories(
+                        expandedCategories.size === categoryBreakdown.length 
+                          ? new Set() 
+                          : new Set(categoryBreakdown.map((_, i) => i))
+                      )}
+                    >
+                      {expandedCategories.size === categoryBreakdown.length ? 'Collapse All' : 'Expand All'}
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    {categoryBreakdown.map((category, index) => (
+                      <div key={category.name} className="border rounded-lg overflow-hidden">
+                        <div 
+                          className="p-4 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+                          onClick={() => {
+                            const newExpanded = new Set(expandedCategories);
+                            if (newExpanded.has(index)) {
+                              newExpanded.delete(index);
+                            } else {
+                              newExpanded.add(index);
+                            }
+                            setExpandedCategories(newExpanded);
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <ApperIcon 
+                                name={expandedCategories.has(index) ? "ChevronDown" : "ChevronRight"} 
+                                className="h-5 w-5 text-gray-400" 
+                              />
+                              <div>
+                                <h4 className="font-medium text-gray-900">{category.name}</h4>
+                                <p className="text-sm text-gray-600">
+                                  {category.gradedCount} of {category.assignmentCount} assignments graded
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="flex items-center space-x-2">
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-gray-900">{category.percentage}%</p>
+                                  <p className="text-sm text-gray-600">{category.letterGrade}</p>
+                                </div>
+                                <div className="w-16 h-2 bg-gray-200 rounded-full">
+                                  <div 
+                                    className={`h-2 rounded-full ${
+                                      category.percentage >= 90 ? 'bg-emerald-500' :
+                                      category.percentage >= 80 ? 'bg-blue-500' :
+                                      category.percentage >= 70 ? 'bg-amber-500' : 'bg-red-500'
+                                    }`}
+                                    style={{ width: `${Math.min(category.percentage, 100)}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Category Details */}
+                        {expandedCategories.has(index) && (
+                          <div className="p-4 border-t bg-white">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                <p className="text-2xl font-bold text-gray-900">{category.earnedPoints}</p>
+                                <p className="text-sm text-gray-600">Points Earned</p>
+                              </div>
+                              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                <p className="text-2xl font-bold text-gray-900">{category.totalPoints}</p>
+                                <p className="text-sm text-gray-600">Total Points</p>
+                              </div>
+                              <div className="text-center p-3 bg-gray-50 rounded-lg">
+                                <p className="text-2xl font-bold text-gray-900">{category.completionRate}%</p>
+                                <p className="text-sm text-gray-600">Completion Rate</p>
+                              </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                              <h5 className="font-medium text-gray-900 mb-3">Recent Assignments</h5>
+                              {category.assignments.slice(0, 5).map((assignment) => (
+                                <div key={assignment.Id} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                                  <div>
+                                    <p className="font-medium text-sm">{assignment.title}</p>
+                                    <p className="text-xs text-gray-600">{format(new Date(assignment.dueDate), 'MMM d, yyyy')}</p>
+                                  </div>
+                                  <div className="text-right">
+                                    <p className="font-medium text-sm">
+                                      {assignment.grade !== null 
+                                        ? `${assignment.grade}/${assignment.points}`
+                                        : 'Not graded'
+                                      }
+                                    </p>
+                                    {assignment.grade !== null && (
+                                      <p className="text-xs text-gray-600">
+                                        {Math.round((assignment.grade / assignment.points) * 100)}%
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                              {category.assignments.length > 5 && (
+                                <p className="text-sm text-gray-600 text-center py-2">
+                                  ...and {category.assignments.length - 5} more assignments
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              )}
+            </>
+          );
+        })()}
 
         {/* Classes */}
         <div className="space-y-4">
@@ -436,8 +580,8 @@ const Grades = () => {
         </div>
       </div>
 
-      {/* Summary Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+{/* Summary Stats with Class Average */}
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card className="p-4">
           <div className="flex items-center">
             <ApperIcon name="Users" className="h-5 w-5 text-blue-600 mr-2" />
@@ -449,7 +593,16 @@ const Grades = () => {
         </Card>
         <Card className="p-4">
           <div className="flex items-center">
-            <ApperIcon name="FileText" className="h-5 w-5 text-green-600 mr-2" />
+            <ApperIcon name="Target" className="h-5 w-5 text-emerald-600 mr-2" />
+            <div>
+              <p className="text-sm text-gray-600">Class Average</p>
+              <p className="text-xl font-semibold">{gradebookService.getClassAverage(studentRows)}%</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="p-4">
+          <div className="flex items-center">
+            <ApperIcon name="FileText" className="h-5 w-5 text-purple-600 mr-2" />
             <div>
               <p className="text-sm text-gray-600">Submission Rate</p>
               <p className="text-xl font-semibold">{summary.submissionRate}%</p>
@@ -458,7 +611,7 @@ const Grades = () => {
         </Card>
         <Card className="p-4">
           <div className="flex items-center">
-            <ApperIcon name="CheckCircle" className="h-5 w-5 text-purple-600 mr-2" />
+            <ApperIcon name="CheckCircle" className="h-5 w-5 text-green-600 mr-2" />
             <div>
               <p className="text-sm text-gray-600">Grading Rate</p>
               <p className="text-xl font-semibold">{summary.gradingRate}%</p>

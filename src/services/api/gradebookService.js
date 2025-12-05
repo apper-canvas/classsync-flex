@@ -392,6 +392,103 @@ async getGradebookData() {
 
     return distribution;
   }
+
+  // Calculate overall GPA for a student across all classes
+  calculateStudentGPA(studentClasses) {
+    if (!studentClasses || studentClasses.length === 0) {
+      return { gpa: 0, letterGrade: 'N/A', totalCredits: 0 };
+    }
+
+    const classesWithGrades = studentClasses.filter(cls => 
+      cls.currentGrade && cls.currentGrade.percentage > 0
+    );
+
+    if (classesWithGrades.length === 0) {
+      return { gpa: 0, letterGrade: 'N/A', totalCredits: 0 };
+    }
+
+    // Calculate weighted GPA (assuming each class = 1 credit hour)
+    let totalGradePoints = 0;
+    let totalCredits = classesWithGrades.length;
+
+    classesWithGrades.forEach(cls => {
+      const gradePoints = this.getGradePoints(cls.currentGrade.percentage);
+      totalGradePoints += gradePoints;
+    });
+
+    const gpa = totalCredits > 0 ? (totalGradePoints / totalCredits) : 0;
+    const letterGrade = this.getLetterGrade(Math.round(gpa * 25)); // Convert 4.0 scale back to percentage for letter grade
+
+    return {
+      gpa: Math.round(gpa * 100) / 100, // Round to 2 decimal places
+      letterGrade,
+      totalCredits
+    };
+  }
+
+  // Convert percentage to 4.0 GPA scale
+  getGradePoints(percentage) {
+    if (percentage >= 97) return 4.0;
+    if (percentage >= 93) return 3.7;
+    if (percentage >= 90) return 3.3;
+    if (percentage >= 87) return 3.0;
+    if (percentage >= 83) return 2.7;
+    if (percentage >= 80) return 2.3;
+    if (percentage >= 77) return 2.0;
+    if (percentage >= 73) return 1.7;
+    if (percentage >= 70) return 1.3;
+    if (percentage >= 67) return 1.0;
+    if (percentage >= 65) return 0.7;
+    return 0.0;
+  }
+
+  // Get grade breakdown by assignment category
+  getCategoryBreakdown(studentClasses) {
+    const categoryStats = {};
+    
+    studentClasses.forEach(classData => {
+      classData.assignments.forEach(assignment => {
+        // Use assignment type/category (default to subject if no category)
+        const category = assignment.type || assignment.subject || 'General';
+        
+        if (!categoryStats[category]) {
+          categoryStats[category] = {
+            name: category,
+            totalPoints: 0,
+            earnedPoints: 0,
+            assignmentCount: 0,
+            gradedCount: 0,
+            assignments: []
+          };
+        }
+        
+        categoryStats[category].totalPoints += assignment.points;
+        categoryStats[category].assignmentCount += 1;
+        categoryStats[category].assignments.push(assignment);
+        
+        if (assignment.grade !== null && assignment.grade !== undefined) {
+          categoryStats[category].earnedPoints += assignment.grade;
+          categoryStats[category].gradedCount += 1;
+        }
+      });
+    });
+
+    // Calculate percentages and add metadata
+    return Object.values(categoryStats).map(category => {
+      const percentage = category.totalPoints > 0 
+        ? Math.round((category.earnedPoints / category.totalPoints) * 100) 
+        : 0;
+      
+      return {
+        ...category,
+        percentage,
+        letterGrade: this.getLetterGrade(percentage),
+        completionRate: category.assignmentCount > 0 
+          ? Math.round((category.gradedCount / category.assignmentCount) * 100)
+          : 0
+      };
+    }).sort((a, b) => b.percentage - a.percentage); // Sort by performance
+  }
 }
 
 // Export singleton instance
