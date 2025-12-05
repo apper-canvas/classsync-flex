@@ -7,7 +7,10 @@
     "points": 50,
     "subject": "Mathematics",
     "teacherId": 1,
+    "assignmentType": "Homework",
     "createdAt": "2024-12-10T10:00:00Z",
+    "createdDate": "2024-12-10T10:00:00Z",
+    "lastModifiedDate": "2024-12-10T10:00:00Z",
     "status": "active"
   },
   {
@@ -18,7 +21,10 @@
     "points": 100,
     "subject": "History",
     "teacherId": 1,
+    "assignmentType": "Essay",
     "createdAt": "2024-12-08T14:30:00Z",
+    "createdDate": "2024-12-08T14:30:00Z",
+    "lastModifiedDate": "2024-12-08T14:30:00Z",
     "status": "active"
   },
   {
@@ -29,7 +35,10 @@
     "points": 75,
     "subject": "Chemistry",
     "teacherId": 6,
+    "assignmentType": "Lab",
     "createdAt": "2024-12-12T16:15:00Z",
+    "createdDate": "2024-12-12T16:15:00Z",
+    "lastModifiedDate": "2024-12-12T16:15:00Z",
     "status": "active"
   },
   {
@@ -40,7 +49,10 @@
     "points": 25,
     "subject": "English Literature",
     "teacherId": 1,
+    "assignmentType": "Quiz",
     "createdAt": "2024-12-09T09:00:00Z",
+    "createdDate": "2024-12-09T09:00:00Z",
+    "lastModifiedDate": "2024-12-09T09:00:00Z",
     "status": "active"
   },
   {
@@ -51,7 +63,10 @@
     "points": 60,
     "subject": "Physics",
     "teacherId": 6,
+    "assignmentType": "Project",
     "createdAt": "2024-12-11T11:45:00Z",
+    "createdDate": "2024-12-11T11:45:00Z",
+    "lastModifiedDate": "2024-12-11T11:45:00Z",
     "status": "active"
   }
 ]

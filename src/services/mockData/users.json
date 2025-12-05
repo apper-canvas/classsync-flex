@@ -11,6 +11,10 @@
     "name": "Alice Johnson",
     "email": "alice.johnson@student.edu",
     "role": "student",
+    "gradeLevel": "11th",
+    "classesEnrolled": ["Mathematics", "History", "Chemistry"],
+    "overallGPA": 3.8,
+    "currentStatus": "Active",
     "createdAt": "2024-01-20T10:30:00Z"
   },
   {
@@ -18,6 +22,10 @@
     "name": "Bob Wilson",
     "email": "bob.wilson@student.edu",
     "role": "student",
+    "gradeLevel": "10th",
+    "classesEnrolled": ["Physics", "English Literature"],
+    "overallGPA": 3.2,
+    "currentStatus": "Active",
     "createdAt": "2024-01-22T14:15:00Z"
   },
   {
@@ -25,6 +33,10 @@
     "name": "Emma Davis",
     "email": "emma.davis@student.edu",
     "role": "student",
+    "gradeLevel": "12th",
+    "classesEnrolled": ["Chemistry", "Mathematics", "Physics", "History"],
+    "overallGPA": 3.9,
+    "currentStatus": "Active",
     "createdAt": "2024-01-25T09:45:00Z"
   },
   {
@@ -32,6 +44,10 @@
     "name": "Michael Brown",
     "email": "michael.brown@student.edu",
     "role": "student",
+    "gradeLevel": "9th",
+    "classesEnrolled": ["Mathematics", "English Literature"],
+    "overallGPA": 2.8,
+    "currentStatus": "Inactive",
     "createdAt": "2024-02-01T11:20:00Z"
   },
   {

@@ -70,7 +70,7 @@ const loadAssignments = async () => {
     }
 
     // Sort assignments
-    filtered.sort((a, b) => {
+filtered.sort((a, b) => {
       switch (sortBy) {
         case "title":
           return a.title.localeCompare(b.title);
@@ -78,6 +78,10 @@ const loadAssignments = async () => {
           return a.subject.localeCompare(b.subject);
         case "points":
           return b.points - a.points;
+        case "assignmentType":
+          return a.assignmentType.localeCompare(b.assignmentType);
+        case "createdDate":
+          return new Date(b.createdDate) - new Date(a.createdDate);
         case "dueDate":
         default:
           return new Date(a.dueDate) - new Date(b.dueDate);
@@ -183,7 +187,7 @@ const getUniqueSubjects = () => {
         </Select>
 
         <Select
-          value={sortBy}
+value={sortBy}
           onChange={(e) => setSortBy(e.target.value)}
           className="w-full sm:w-48"
         >
@@ -191,6 +195,8 @@ const getUniqueSubjects = () => {
           <option value="title">Sort by Title</option>
           <option value="subject">Sort by Subject</option>
           <option value="points">Sort by Points</option>
+          <option value="assignmentType">Sort by Type</option>
+          <option value="createdDate">Sort by Created Date</option>
         </Select>
       </div>
 

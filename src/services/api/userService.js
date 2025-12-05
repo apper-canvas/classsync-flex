@@ -27,13 +27,22 @@ class UserService {
   }
 
   async create(userData) {
-    await delay(400);
+await delay(400);
     const newId = Math.max(...this.users.map(u => u.Id)) + 1;
     const newUser = {
       Id: newId,
       ...userData,
       createdAt: new Date().toISOString()
     };
+    
+    // Add default values for student-specific fields if role is student
+    if (userData.role === "student") {
+      newUser.gradeLevel = userData.gradeLevel || "9th";
+      newUser.classesEnrolled = userData.classesEnrolled || [];
+      newUser.overallGPA = userData.overallGPA || 0.0;
+      newUser.currentStatus = userData.currentStatus || "Active";
+    }
+    
     this.users.push(newUser);
     return { ...newUser };
   }

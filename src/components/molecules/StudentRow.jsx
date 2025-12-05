@@ -4,9 +4,19 @@ import ApperIcon from "@/components/ApperIcon";
 
 const StudentRow = ({ student, stats, onViewGrades, onRemove }) => {
   const getAverageGrade = () => {
+    if (student.overallGPA) return student.overallGPA.toFixed(1);
     if (!stats?.grades || stats.grades.length === 0) return "N/A";
     const average = stats.grades.reduce((sum, grade) => sum + grade, 0) / stats.grades.length;
     return Math.round(average);
+  };
+
+  const getStatusBadge = (status) => {
+    const variants = {
+      "Active": "success",
+      "Inactive": "secondary", 
+      "Suspended": "danger"
+    };
+    return <Badge variant={variants[status] || "secondary"}>{status}</Badge>;
   };
 
   const getCompletionRate = () => {
@@ -34,6 +44,25 @@ const StudentRow = ({ student, stats, onViewGrades, onRemove }) => {
       </td>
       
       <td className="px-6 py-4">
+        <div className="text-sm font-medium text-gray-900">{student.gradeLevel || "N/A"}</div>
+      </td>
+      
+      <td className="px-6 py-4">
+        <div className="text-sm text-gray-900">
+          {student.classesEnrolled ? 
+            `${student.classesEnrolled.length} classes` : 
+            "N/A"
+          }
+        </div>
+        {student.classesEnrolled && student.classesEnrolled.length > 0 && (
+          <div className="text-xs text-gray-500">
+            {student.classesEnrolled.slice(0, 2).join(", ")}
+            {student.classesEnrolled.length > 2 && ` +${student.classesEnrolled.length - 2}`}
+          </div>
+        )}
+      </td>
+      
+      <td className="px-6 py-4">
         <div className="flex items-center">
           <ApperIcon name="Target" className="h-4 w-4 mr-1 text-amber-500" />
           <span className="text-sm font-medium">{getAverageGrade()}</span>
@@ -41,18 +70,14 @@ const StudentRow = ({ student, stats, onViewGrades, onRemove }) => {
       </td>
       
       <td className="px-6 py-4">
+        {getStatusBadge(student.currentStatus || "Active")}
+      </td>
+      
+      <td className="px-6 py-4">
         <div className="flex items-center">
           <ApperIcon name="CheckCircle" className="h-4 w-4 mr-1 text-emerald-500" />
           <span className="text-sm">{getCompletionRate()}</span>
         </div>
-      </td>
-      
-      <td className="px-6 py-4">
-        <Badge 
-          variant={stats?.submittedAssignments === stats?.totalAssignments ? "success" : "warning"}
-        >
-          {stats?.submittedAssignments || 0}/{stats?.totalAssignments || 0} Submitted
-        </Badge>
       </td>
       
       <td className="px-6 py-4 text-right text-sm font-medium">

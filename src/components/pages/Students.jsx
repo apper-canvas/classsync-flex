@@ -26,7 +26,7 @@ const navigate = useNavigate();
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  useEffect(() => {
+useEffect(() => {
     if (currentRole !== "teacher") {
       navigate("/dashboard");
       return;
@@ -57,7 +57,7 @@ const navigate = useNavigate();
     }
   };
 
-  const getStudentStats = (studentId) => {
+const getStudentStats = (studentId) => {
     const studentSubmissions = submissions.filter(s => s.studentId === studentId);
     const totalAssignments = assignments.length;
     const submittedAssignments = studentSubmissions.filter(s => s.status !== "pending").length;
@@ -216,26 +216,32 @@ const handleViewGrades = (student) => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+<table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Student
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Avg Grade
+                    Grade Level
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Classes Enrolled
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Overall GPA
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Completion Rate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Submissions
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
-              </thead>
+</thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredStudents.map(student => (
                   <StudentRow

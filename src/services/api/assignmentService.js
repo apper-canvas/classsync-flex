@@ -35,13 +35,16 @@ class AssignmentService {
       .map(a => ({ ...a }));
   }
 
-  async create(assignmentData) {
+async create(assignmentData) {
     await delay(400);
     const newId = Math.max(...this.assignments.map(a => a.Id)) + 1;
+    const now = new Date().toISOString();
     const newAssignment = {
       Id: newId,
       ...assignmentData,
-      createdAt: new Date().toISOString(),
+      createdAt: now,
+      createdDate: now,
+      lastModifiedDate: now,
       status: "active"
     };
     this.assignments.push(newAssignment);
@@ -54,8 +57,13 @@ class AssignmentService {
     if (index === -1) {
       throw new Error("Assignment not found");
     }
-    this.assignments[index] = { ...this.assignments[index], ...assignmentData };
-    return { ...this.assignments[index] };
+    const updatedAssignment = { 
+      ...this.assignments[index], 
+      ...assignmentData,
+      lastModifiedDate: new Date().toISOString()
+    };
+    this.assignments[index] = updatedAssignment;
+    return { ...updatedAssignment };
   }
 
   async delete(id) {

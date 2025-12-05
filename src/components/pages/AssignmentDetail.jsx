@@ -97,6 +97,17 @@ const dueDate = new Date(assignment.dueDate);
   const isDueSoon = isAfter(dueDate, now) && isBefore(dueDate, addDays(now, 3));
   const isPastDue = isBefore(dueDate, now);
 
+  const getAssignmentTypeIcon = (type) => {
+    const iconMap = {
+      'Homework': 'BookOpen',
+      'Quiz': 'HelpCircle', 
+      'Project': 'FolderOpen',
+      'Lab': 'Flask',
+      'Essay': 'PenTool'
+    };
+    return iconMap[type] || 'FileText';
+  };
+
   const getTimeUntilDue = () => {
     const timeDiff = dueDate.getTime() - now.getTime();
     const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
@@ -134,15 +145,20 @@ const getStatusBadge = () => {
     return <Badge variant="primary">{assignment.status}</Badge>;
   };
 
-  const renderTeacherView = () => (
+const renderTeacherView = () => (
     <div className="space-y-6">
       {/* Assignment Details */}
       <Card className="p-6">
         <div className="space-y-6">
           <div className="flex items-start justify-between">
             <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-gray-900">{assignment.title}</h1>
-              <p className="text-lg text-gray-600">{assignment.subject}</p>
+              <div className="flex items-center space-x-3">
+                <ApperIcon name={getAssignmentTypeIcon(assignment.assignmentType)} className="h-8 w-8 text-purple-500" />
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">{assignment.title}</h1>
+                  <p className="text-lg text-gray-600">{assignment.subject} • {assignment.assignmentType}</p>
+                </div>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               {getStatusBadge()}
@@ -159,7 +175,7 @@ const getStatusBadge = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <div className="flex items-center space-x-2 text-gray-600">
               <ApperIcon name="Calendar" className="h-5 w-5" />
               <div>
@@ -185,10 +201,18 @@ const getStatusBadge = () => {
             </div>
 
             <div className="flex items-center space-x-2 text-gray-600">
+              <ApperIcon name="Plus" className="h-5 w-5" />
+              <div>
+                <p className="text-sm font-medium">Created</p>
+                <p className="text-sm">{format(new Date(assignment.createdDate), "MMM d, yyyy")}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center space-x-2 text-gray-600">
               <ApperIcon name="Clock" className="h-5 w-5" />
               <div>
-                <p className="text-sm font-medium">Status</p>
-                <p className="text-sm capitalize">{assignment.status}</p>
+                <p className="text-sm font-medium">Last Modified</p>
+                <p className="text-sm">{format(new Date(assignment.lastModifiedDate), "MMM d, yyyy")}</p>
               </div>
             </div>
           </div>
@@ -281,9 +305,14 @@ const getStatusBadge = () => {
       <Card className="p-6">
         <div className="space-y-6">
           <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <h1 className="text-3xl font-bold text-gray-900">{assignment.title}</h1>
-              <p className="text-lg text-gray-600">{assignment.subject}</p>
+<div className="space-y-2">
+              <div className="flex items-center space-x-3">
+                <ApperIcon name={getAssignmentTypeIcon(assignment.assignmentType)} className="h-8 w-8 text-purple-500" />
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900">{assignment.title}</h1>
+                  <p className="text-lg text-gray-600">{assignment.subject} • {assignment.assignmentType}</p>
+                </div>
+              </div>
             </div>
             <div className="flex items-center space-x-2">
               {getStatusBadge()}
@@ -301,7 +330,8 @@ const getStatusBadge = () => {
               )}
             </div>
           </div>
-<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="flex items-center space-x-2 text-gray-600">
               <ApperIcon name="Calendar" className="h-5 w-5" />
               <div>
@@ -321,6 +351,14 @@ const getStatusBadge = () => {
               </div>
             </div>
 
+            <div className="flex items-center space-x-2 text-gray-600">
+              <ApperIcon name="Plus" className="h-5 w-5" />
+              <div>
+                <p className="text-sm font-medium">Created</p>
+                <p className="text-sm">{format(new Date(assignment.createdDate), "MMM d, yyyy")}</p>
+              </div>
+            </div>
+
             {submission && submission.grade !== null && (
               <div className="flex items-center space-x-2 text-gray-600">
                 <ApperIcon name="Award" className="h-5 w-5" />
@@ -332,7 +370,7 @@ const getStatusBadge = () => {
                 </div>
               </div>
             )}
-</div>
+          </div>
 
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900 mb-3">Assignment Instructions</h3>

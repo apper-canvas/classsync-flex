@@ -12,7 +12,8 @@ const [formData, setFormData] = useState({
     description: assignment?.description || "",
     dueDate: assignment?.dueDate ? assignment.dueDate.split("T")[0] : "",
     points: assignment?.points || "",
-    subject: assignment?.subject || ""
+    subject: assignment?.subject || "",
+    assignmentType: assignment?.assignmentType || ""
   });
 
   const [loading, setLoading] = useState(false);
@@ -97,7 +98,7 @@ const [formData, setFormData] = useState({
     setLoading(true);
     
     try {
-      const assignmentData = {
+const assignmentData = {
         ...formData,
         points: parseInt(formData.points),
         dueDate: new Date(formData.dueDate + "T23:59:00Z").toISOString(),
@@ -197,6 +198,24 @@ const [formData, setFormData] = useState({
                   {subject}
                 </option>
               ))}
+            </FormField>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
+            <FormField
+              label="Assignment Type"
+              type="select"
+              value={formData.assignmentType}
+              onChange={(e) => handleChange("assignmentType", e.target.value)}
+              error={errors.assignmentType}
+              placeholder="Select assignment type"
+            >
+              <option value="">Select assignment type</option>
+              <option value="Homework">Homework</option>
+              <option value="Quiz">Quiz</option>
+              <option value="Project">Project</option>
+              <option value="Lab">Lab</option>
+              <option value="Essay">Essay</option>
             </FormField>
           </div>
 

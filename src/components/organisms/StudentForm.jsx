@@ -7,17 +7,21 @@ import ApperIcon from "@/components/ApperIcon";
 import userService from "@/services/api/userService";
 
 const StudentForm = ({ onSave, onCancel }) => {
-  const [formData, setFormData] = useState({
+const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
-    studentId: ""
+    studentId: "",
+    gradeLevel: "",
+    classesEnrolled: [],
+    overallGPA: "",
+    currentStatus: "Active"
   });
   
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const validateForm = () => {
+const validateForm = () => {
     const newErrors = {};
     
     if (!formData.firstName.trim()) {
@@ -37,6 +41,14 @@ const StudentForm = ({ onSave, onCancel }) => {
     if (!formData.studentId.trim()) {
       newErrors.studentId = "Student ID is required";
     }
+
+    if (!formData.gradeLevel) {
+      newErrors.gradeLevel = "Grade level is required";
+    }
+
+    if (formData.overallGPA && (isNaN(formData.overallGPA) || formData.overallGPA < 0 || formData.overallGPA > 4)) {
+      newErrors.overallGPA = "GPA must be a number between 0 and 4";
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -51,11 +63,13 @@ const StudentForm = ({ onSave, onCancel }) => {
 
     setLoading(true);
     
-    try {
+try {
       const studentData = {
         ...formData,
         name: `${formData.firstName} ${formData.lastName}`,
         role: "student",
+        classesEnrolled: formData.classesEnrolled,
+        overallGPA: formData.overallGPA ? parseFloat(formData.overallGPA) : 0.0,
         enrollmentDate: new Date().toISOString()
       };
 
@@ -70,10 +84,18 @@ const StudentForm = ({ onSave, onCancel }) => {
     }
   };
 
-  const handleChange = (field, value) => {
+const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const handleClassesChange = (classString) => {
+    const classes = classString.split(',').map(c => c.trim()).filter(c => c.length > 0);
+    setFormData(prev => ({ ...prev, classesEnrolled: classes }));
+    if (errors.classesEnrolled) {
+      setErrors(prev => ({ ...prev, classesEnrolled: "" }));
     }
   };
 
@@ -94,7 +116,7 @@ const StudentForm = ({ onSave, onCancel }) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+<form onSubmit={handleSubmit} className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField
               label="First Name"
@@ -122,13 +144,65 @@ const StudentForm = ({ onSave, onCancel }) => {
             placeholder="student@example.com"
           />
 
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              label="Student ID"
+              value={formData.studentId}
+              onChange={(e) => handleChange("studentId", e.target.value)}
+              error={errors.studentId}
+              placeholder="Enter student ID"
+            />
+
+            <FormField
+              label="Grade Level"
+              type="select"
+              value={formData.gradeLevel}
+              onChange={(e) => handleChange("gradeLevel", e.target.value)}
+              error={errors.gradeLevel}
+              placeholder="Select grade level"
+            >
+              <option value="">Select grade level</option>
+              <option value="9th">9th Grade</option>
+              <option value="10th">10th Grade</option>
+              <option value="11th">11th Grade</option>
+              <option value="12th">12th Grade</option>
+            </FormField>
+          </div>
+
           <FormField
-            label="Student ID"
-            value={formData.studentId}
-            onChange={(e) => handleChange("studentId", e.target.value)}
-            error={errors.studentId}
-            placeholder="Enter student ID"
+            label="Classes Enrolled"
+            value={formData.classesEnrolled.join(', ')}
+            onChange={(e) => handleClassesChange(e.target.value)}
+            error={errors.classesEnrolled}
+            placeholder="Mathematics, Science, History (comma separated)"
+            helperText="Enter class names separated by commas"
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              label="Overall GPA"
+              type="number"
+              step="0.1"
+              min="0"
+              max="4"
+              value={formData.overallGPA}
+              onChange={(e) => handleChange("overallGPA", e.target.value)}
+              error={errors.overallGPA}
+              placeholder="0.0"
+            />
+
+            <FormField
+              label="Current Status"
+              type="select"
+              value={formData.currentStatus}
+              onChange={(e) => handleChange("currentStatus", e.target.value)}
+              error={errors.currentStatus}
+            >
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="Suspended">Suspended</option>
+            </FormField>
+          </div>
 
           <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
             <Button 
