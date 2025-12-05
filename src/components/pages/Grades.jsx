@@ -218,7 +218,7 @@ const Grades = () => {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
-              <ApperIcon name="BookOpen" className="h-7 w-7 mr-3 text-primary-600" />
+<ApperIcon name="BookOpen" className="h-7 w-7 mr-3 text-purple-600" />
               My Grades
             </h1>
             <p className="text-gray-600 mt-1">

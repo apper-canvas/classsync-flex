@@ -51,7 +51,7 @@ return [
         </div>
 
         {menuItems.map((item) => (
-          <NavLink
+<NavLink
             key={item.path}
             to={item.path}
             onClick={handleNavClick}
@@ -61,7 +61,9 @@ return [
                 isActive
                   ? currentRole === "teacher"
                     ? "bg-primary-50 text-primary-700 border-l-4 border-l-primary-500"
-                    : "bg-purple-50 text-purple-700 border-l-4 border-l-purple-500"
+                    : (item.path === "/calendar" || item.path === "/assignments" || item.path === "/grades")
+                      ? "bg-purple-50 text-purple-700 border-l-4 border-l-purple-500"
+                      : "bg-purple-50 text-purple-700 border-l-4 border-l-purple-500"
                   : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
               )
             }
