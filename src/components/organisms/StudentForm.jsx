@@ -6,16 +6,16 @@ import FormField from "@/components/molecules/FormField";
 import ApperIcon from "@/components/ApperIcon";
 import userService from "@/services/api/userService";
 
-const StudentForm = ({ onSave, onCancel }) => {
-const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    studentId: "",
-    gradeLevel: "",
-    classesEnrolled: [],
-    overallGPA: "",
-    currentStatus: "Active"
+const StudentForm = ({ student, onSave, onCancel }) => {
+  const [formData, setFormData] = useState({
+firstName: student?.name?.split(" ")[0] || "",
+    lastName: student?.name?.split(" ").slice(1).join(" ") || "",
+    email: student?.email || "",
+    studentId: student?.studentId || "",
+    gradeLevel: student?.gradeLevel || "",
+    classesEnrolled: student?.classesEnrolled || [],
+    overallGPA: student?.overallGPA?.toString() || "",
+    currentStatus: student?.currentStatus || "Active"
   });
   
   const [loading, setLoading] = useState(false);
@@ -70,7 +70,7 @@ try {
         role: "student",
         classesEnrolled: formData.classesEnrolled,
         overallGPA: formData.overallGPA ? parseFloat(formData.overallGPA) : 0.0,
-        enrollmentDate: new Date().toISOString()
+        enrollmentDate: student?.enrollmentDate || new Date().toISOString()
       };
 
       await userService.create(studentData);
@@ -106,9 +106,9 @@ const handleChange = (field, value) => {
           <div className="h-10 w-10 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 flex items-center justify-center">
             <ApperIcon name="UserPlus" className="h-5 w-5 text-white" />
           </div>
-          <div>
+<div>
             <h2 className="text-xl font-bold text-gray-900">
-              Add New Student
+              {student ? 'Edit Student' : 'Add New Student'}
             </h2>
             <p className="text-gray-600">
               Fill in the student details to add them to your class
@@ -224,10 +224,10 @@ const handleChange = (field, value) => {
                   <ApperIcon name="Loader2" className="h-4 w-4 mr-2 animate-spin" />
                   Adding...
                 </>
-              ) : (
+) : (
                 <>
-                  <ApperIcon name="UserPlus" className="h-4 w-4 mr-2" />
-                  Add Student
+                  <ApperIcon name={student ? "Save" : "UserPlus"} className="h-4 w-4 mr-2" />
+                  {student ? 'Update Student' : 'Add Student'}
                 </>
               )}
             </Button>

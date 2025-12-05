@@ -2,7 +2,7 @@ import Badge from "@/components/atoms/Badge";
 import Button from "@/components/atoms/Button";
 import ApperIcon from "@/components/ApperIcon";
 
-const StudentRow = ({ student, stats, onViewGrades, onRemove }) => {
+const StudentRow = ({ student, stats, onViewGrades, onRemove, onStudentClick }) => {
   const getAverageGrade = () => {
     if (student.overallGPA) return student.overallGPA.toFixed(1);
     if (!stats?.grades || stats.grades.length === 0) return "N/A";
@@ -25,8 +25,8 @@ const StudentRow = ({ student, stats, onViewGrades, onRemove }) => {
     return `${Math.round((stats.submittedAssignments / stats.totalAssignments) * 100)}%`;
   };
 
-  return (
-    <tr className="hover:bg-gray-50 transition-colors duration-150">
+return (
+    <tr className="hover:bg-gray-50 transition-colors duration-150 cursor-pointer" onClick={() => onStudentClick?.(student)}>
       <td className="px-6 py-4">
         <div className="flex items-center">
           <div className="flex-shrink-0 h-8 w-8">
@@ -82,10 +82,13 @@ const StudentRow = ({ student, stats, onViewGrades, onRemove }) => {
       
       <td className="px-6 py-4 text-right text-sm font-medium">
         <div className="flex items-center justify-end space-x-2">
-          <Button 
+<Button 
             variant="ghost" 
             size="sm"
-            onClick={() => onViewGrades?.(student)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewGrades?.(student);
+            }}
           >
             <ApperIcon name="Eye" className="h-4 w-4 mr-1" />
             View Grades
