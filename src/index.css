@@ -128,3 +128,27 @@
 .upload-pulse {
   animation: upload-pulse 1.5s ease-in-out infinite;
 }
+
+/* Purple Title Theme for Student Portal */
+h1, h2, h3, h4, h5, h6 {
+  @apply text-purple-600;
+}
+
+/* Page title specific styling */
+.page-title {
+  @apply text-purple-600 font-bold;
+}
+
+/* Card and component titles */
+.card-title {
+  @apply text-purple-600 font-semibold;
+}
+
+/* Utility classes for purple text */
+.text-purple-primary {
+  @apply text-purple-600;
+}
+
+.text-purple-secondary {
+  @apply text-purple-500;
+}
