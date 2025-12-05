@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useOutletContext, useParams } from "react-router-dom";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import gradebookService from "@/services/api/gradebookService";
@@ -20,6 +20,7 @@ import Students from "@/components/pages/Students";
 
 const Grades = () => {
   const { currentRole } = useOutletContext();
+  const { studentId } = useParams();
   const [gradebookData, setGradebookData] = useState(null);
   const [studentGrades, setStudentGrades] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
@@ -29,13 +30,17 @@ const Grades = () => {
   const [editingValue, setEditingValue] = useState('');
   const [expandedClasses, setExpandedClasses] = useState(new Set());
   const [expandedCategories, setExpandedCategories] = useState(new Set());
+  
   useEffect(() => {
-    if (currentRole === 'teacher') {
+if (studentId) {
+      // Load specific student grades when studentId is provided
+      loadSpecificStudentGrades(parseInt(studentId));
+    } else if (currentRole === 'teacher') {
       loadGradebook();
     } else {
       loadStudentGrades();
     }
-}, [currentRole]);
+  }, [currentRole, studentId]);
 
   const loadGradebook = async () => {
     try {
@@ -51,7 +56,7 @@ const Grades = () => {
     }
   };
 
-  const loadStudentGrades = async () => {
+const loadStudentGrades = async () => {
     try {
       setLoading(true);
       setError(null);
@@ -62,6 +67,23 @@ const Grades = () => {
     } catch (err) {
       console.error('Error loading student grades:', err);
       setError(err.message || 'Failed to load grades');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadSpecificStudentGrades = async (studentId) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const grades = await gradebookService.getStudentGrades(studentId);
+      setStudentGrades(grades);
+      // Get student info for display
+      const student = await userService.getById(studentId);
+      setCurrentUser(student);
+    } catch (err) {
+      console.error('Error loading specific student grades:', err);
+      setError(err.message || 'Failed to load student grades');
     } finally {
       setLoading(false);
     }
@@ -534,11 +556,10 @@ const Grades = () => {
   }
 
   // Render student view for non-teachers
-  if (currentRole !== 'teacher') {
+if (currentRole !== 'teacher' || studentId) {
     return renderStudentGrades();
   }
-
-  // Teacher view continues as before
+// Teacher view continues as before
   if (!gradebookData || gradebookData.studentRows.length === 0) {
     return (
       <div className="text-center py-12">

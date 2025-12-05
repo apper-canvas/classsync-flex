@@ -101,8 +101,16 @@ const mainRoutes = [
       </Suspense>
     )
   },
-  {
+{
     path: "grades",
+    element: (
+      <Suspense fallback={<LoadingSpinner />}>
+        <Grades />
+      </Suspense>
+    )
+  },
+  {
+    path: "grades/:studentId",
     element: (
       <Suspense fallback={<LoadingSpinner />}>
         <Grades />

@@ -81,9 +81,9 @@ const navigate = useNavigate();
     );
   };
 
-  const handleViewGrades = (student) => {
-    // Navigate to a student-specific grades view
-    toast.info(`Viewing grades for ${student.name}`);
+const handleViewGrades = (student) => {
+    // Navigate to student-specific grades view
+    navigate(`/grades/${student.Id}`);
   };
 
   const handleRemoveStudent = async (student) => {
