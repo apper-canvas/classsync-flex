@@ -44,7 +44,7 @@ useEffect(() => {
     setError("");
     
     try {
-      const [studentsData, assignmentsData, submissionsData] = await Promise.all([
+const [studentsData, assignmentsData, submissionsData] = await Promise.all([
         userService.getByRole("student"),
         assignmentService.getActiveAssignments(),
         submissionService.getAll()
@@ -58,6 +58,16 @@ useEffect(() => {
       setError("Failed to load students data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Function to refresh data after updates
+  const refreshStudentsData = async () => {
+    try {
+      const studentsData = await userService.getByRole("student");
+      setStudents(studentsData);
+    } catch (err) {
+      console.error("Error refreshing students data:", err);
     }
   };
 
@@ -106,7 +116,7 @@ const handleStudentClick = (student) => {
   };
 
   const handleDeleteConfirm = async () => {
-    try {
+try {
       await userService.delete(selectedStudent.Id);
       setStudents(prev => prev.filter(s => s.Id !== selectedStudent.Id));
       toast.success('Student deleted successfully');

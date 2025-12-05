@@ -47,13 +47,20 @@ await delay(400);
     return { ...newUser };
   }
 
-  async update(id, userData) {
+async update(id, userData) {
     await delay(350);
     const index = this.users.findIndex(u => u.Id === parseInt(id));
     if (index === -1) {
       throw new Error("User not found");
     }
-    this.users[index] = { ...this.users[index], ...userData };
+    
+    // Update the user with new data
+    this.users[index] = { 
+      ...this.users[index], 
+      ...userData,
+      updatedAt: new Date().toISOString()
+    };
+    
     return { ...this.users[index] };
   }
 

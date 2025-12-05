@@ -73,12 +73,20 @@ try {
         enrollmentDate: student?.enrollmentDate || new Date().toISOString()
       };
 
-      await userService.create(studentData);
-      toast.success("Student added successfully!");
+      if (student) {
+        // Update existing student
+        await userService.update(student.Id, studentData);
+        toast.success("Student updated successfully!");
+      } else {
+        // Create new student
+        await userService.create(studentData);
+        toast.success("Student added successfully!");
+      }
+      
       onSave?.();
     } catch (error) {
-      console.error("Error creating student:", error);
-      toast.error("Failed to add student. Please try again.");
+      console.error(student ? "Error updating student:" : "Error creating student:", error);
+      toast.error(student ? "Failed to update student. Please try again." : "Failed to add student. Please try again.");
     } finally {
       setLoading(false);
     }
